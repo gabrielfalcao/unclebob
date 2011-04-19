@@ -1,0 +1,11 @@
+*.pyc
+.coverage
+./tests/functional/2nd_feature_dir/step_definitions/__init__.py
+docs/_build/
+docs/_build
+lettuce.egg-info/
+build/
+dist/
+.DS_Store
+*.swp
+uncle.bob
