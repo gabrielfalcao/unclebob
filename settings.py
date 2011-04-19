@@ -1,6 +1,7 @@
+import sys
 from os.path import dirname, abspath, join
 LOCAL_FILE = lambda *path: join(abspath(dirname(__file__)), *path)
-
+sys.path.append(LOCAL_FILE('apps'))
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -116,6 +117,8 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'foo',
+    'bar',
     'unclebob',
 )
 

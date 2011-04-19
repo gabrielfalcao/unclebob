@@ -31,8 +31,11 @@ import nose
 from django.conf import settings
 from django.test.simple import DjangoTestSuiteRunner
 
-project_module = __import__(settings.ROOT_URLCONF)
-curdir = os.path.abspath(os.path.dirname(project_module.__file__))
+def get_module_dirname(module_name):
+    module = __import__(module_name)
+    return os.path.abspath(os.path.dirname(module.__file__))
+
+curdir = get_module_dirname(settings.ROOT_URLCONF)
 
 class NoseTestRunner(DjangoTestSuiteRunner):
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
@@ -43,7 +46,7 @@ class NoseTestRunner(DjangoTestSuiteRunner):
             'nosetests', '-s', '--verbosity=2', '--exe', '--with-coverage', '--cover-inclusive'
         ]
         package = os.path.split(os.path.dirname(__file__))[-1]
-        app_names = [app for app in settings.INSTALLED_APPS if not app.startswith("django") and app != 'lettuce.django']
+        app_names = [app for app in settings.INSTALLED_APPS if not app.startswith("django.") and app != 'unclebob']
 
         nose_argv.extend(map(lambda name: "--cover-package=%s" % name, app_names))
         nose_argv.extend(map(lambda name: "--cover-package=%s.%s" % (package, name), app_names))
@@ -59,7 +62,7 @@ class NoseTestRunner(DjangoTestSuiteRunner):
 
         if sys.argv[-1] in ('unit', 'functional', 'integration'):
             kind = sys.argv[-1]
-            apps = map(lambda app: "%s/tests/%s" % (app, kind), app_names)
+            apps = map(lambda app: "%s/tests/%s" % (get_module_dirname(app), kind), app_names)
             not_unitary = kind != 'unit'
 
             if not_unitary:
