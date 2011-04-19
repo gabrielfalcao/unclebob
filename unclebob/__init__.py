@@ -29,24 +29,26 @@ import os
 import sys
 import nose
 from django.conf import settings
+from django.core.management import call_command
 from django.test.simple import DjangoTestSuiteRunner
 
-def get_module_dirname(module_name):
-    module = __import__(module_name)
-    return os.path.abspath(os.path.dirname(module.__file__))
-
-curdir = get_module_dirname(settings.ROOT_URLCONF)
+project_module = __import__(settings.ROOT_URLCONF)
+curdir = os.path.abspath(os.path.dirname(project_module.__file__))
 
 class NoseTestRunner(DjangoTestSuiteRunner):
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
         # Pretend it's a production environment.
         settings.DEBUG = False
 
+        IGNORED_APPS = ['unclebob', 'south']
+        IGNORED_APPS.extend(getattr(settings, 'UNCLEBOB_IGNORED_APPS', []))
+
         nose_argv = [
-            'nosetests', '-s', '--verbosity=2', '--exe', '--with-coverage', '--cover-inclusive'
+            'nosetests', '-s', '--verbosity=2', '--exe', '--with-coverage', '--cover-inclusive', '--cover-erase', '--stop'
         ]
+        nose_argv.extend(getattr(settings, 'UNCLEBOB_EXTRA_NOSE_ARGS', []))
         package = os.path.split(os.path.dirname(__file__))[-1]
-        app_names = [app for app in settings.INSTALLED_APPS if not app.startswith("django.") and app != 'unclebob']
+        app_names = [app for app in settings.INSTALLED_APPS if not app.startswith("django.") and app not in IGNORED_APPS]
 
         nose_argv.extend(map(lambda name: "--cover-package=%s" % name, app_names))
         nose_argv.extend(map(lambda name: "--cover-package=%s.%s" % (package, name), app_names))
@@ -62,27 +64,23 @@ class NoseTestRunner(DjangoTestSuiteRunner):
 
         if sys.argv[-1] in ('unit', 'functional', 'integration'):
             kind = sys.argv[-1]
-            apps = map(lambda app: "%s/tests/%s" % (get_module_dirname(app), kind), app_names)
+            apps = map(lambda app: "%s/tests/%s" % (app, kind), app_names)
             not_unitary = kind != 'unit'
 
-            if not_unitary:
-                self.setup_test_environment()
-                old_config = self.setup_databases()
         else:
             apps = app_names
 
+
         nose_argv.extend(apps)
 
-        try:
-            # cleaning coverage report, because unit and functional
-            # targets could get confused in between test runs
-            os.remove(os.path.join(curdir, '.coverage'))
-        except:
-            pass
-
+        if not_unitary:
+            self.setup_test_environment()
+            old_config = self.setup_databases()
+            if 'south' in settings.INSTALLED_APPS:
+                call_command('migrate', fake=True)
         passed = nose.run(argv=nose_argv)
 
-        if not_unitary and old_config is not None:
+        if not_unitary:
             self.teardown_databases(old_config)
             self.teardown_test_environment()
 
