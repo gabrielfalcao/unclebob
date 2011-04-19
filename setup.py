@@ -25,7 +25,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 import os
-from lettuce import version
+from unclebob import version
 from setuptools import setup
 
 def get_packages():
