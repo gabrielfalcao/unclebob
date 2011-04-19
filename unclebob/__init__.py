@@ -47,7 +47,7 @@ class NoseTestRunner(DjangoTestSuiteRunner):
         IGNORED_APPS.extend(getattr(settings, 'UNCLEBOB_IGNORED_APPS', []))
 
         nose_argv = [
-            'nosetests', '-s', '--verbosity=2', '--exe', '--with-coverage', '--cover-inclusive', '--cover-erase', '--stop'
+            'nosetests', '-s', '--verbosity=2', '--exe', '--with-coverage', '--cover-inclusive', '--cover-erase',
         ]
         nose_argv.extend(getattr(settings, 'UNCLEBOB_EXTRA_NOSE_ARGS', []))
         package = split(dirname(__file__))[-1]
