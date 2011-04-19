@@ -10,3 +10,4 @@ dist/
 *.swp
 uncle.bob
 unclebob.egg-info/
+unclebob*.tar.gz

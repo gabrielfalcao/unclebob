@@ -26,9 +26,8 @@
 
 import os
 import sys
-sys.path.append(os.path.abspath('..'))
 
-os.environ['DJANGO_SETTINGS_MODULE'] = 'django_unclebob.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 
 from unclebob import version
 from setuptools import setup

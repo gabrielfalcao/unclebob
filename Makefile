@@ -4,6 +4,7 @@ filename=unclebob-`python -c 'import unclebob;print unclebob.version'`.tar.gz
 
 export PYTHONPATH:= ${PWD}
 export UNCLEBOB_DEPENDENCIES:= nose django
+export DJANGO_SETTINGS_MODULE:= settings
 
 check_dependencies:
 	@echo "Checking for dependencies to run tests ..."
