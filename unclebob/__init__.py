@@ -25,15 +25,18 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 version = '0.1'
 
-import os
 import sys
 import nose
+from os.path import dirname, abspath, join, split
 from django.conf import settings
 from django.core.management import call_command
 from django.test.simple import DjangoTestSuiteRunner
 
-project_module = __import__(settings.ROOT_URLCONF)
-curdir = os.path.abspath(os.path.dirname(project_module.__file__))
+def get_module_dirname(module_name, *paths_to_join):
+    module = __import__(module_name)
+    return join(abspath(dirname(module.__file__)), *paths_to_join)
+
+curdir = get_module_dirname(settings.ROOT_URLCONF)
 
 class NoseTestRunner(DjangoTestSuiteRunner):
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
@@ -47,7 +50,7 @@ class NoseTestRunner(DjangoTestSuiteRunner):
             'nosetests', '-s', '--verbosity=2', '--exe', '--with-coverage', '--cover-inclusive', '--cover-erase', '--stop'
         ]
         nose_argv.extend(getattr(settings, 'UNCLEBOB_EXTRA_NOSE_ARGS', []))
-        package = os.path.split(os.path.dirname(__file__))[-1]
+        package = split(dirname(__file__))[-1]
         app_names = [app for app in settings.INSTALLED_APPS if not app.startswith("django.") and app not in IGNORED_APPS]
 
         nose_argv.extend(map(lambda name: "--cover-package=%s" % name, app_names))
@@ -64,11 +67,11 @@ class NoseTestRunner(DjangoTestSuiteRunner):
 
         if sys.argv[-1] in ('unit', 'functional', 'integration'):
             kind = sys.argv[-1]
-            apps = map(lambda app: "%s/tests/%s" % (app, kind), app_names)
+            apps = map(lambda app: get_module_dirname(app, "tests", kind), app_names)
             not_unitary = kind != 'unit'
 
         else:
-            apps = app_names
+            apps = map(lambda app: get_module_dirname(app, "tests"), app_names)
 
 
         nose_argv.extend(apps)
