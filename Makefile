@@ -30,6 +30,7 @@ clean:
 	@echo "OK!"
 
 release: clean unit functional integration
+	@make clean
 	@printf "Exporting to $(filename)... "
 	@tar czf $(filename) unclebob setup.py README.md
 	@echo "DONE!"
