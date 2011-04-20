@@ -27,7 +27,7 @@ version = '0.1'
 
 import sys
 import nose
-from os.path import dirname, abspath, join, split
+from os.path import dirname, abspath, join, split, exists
 from django.conf import settings
 from django.core.management import call_command
 from django.test.simple import DjangoTestSuiteRunner
@@ -73,6 +73,8 @@ class NoseTestRunner(DjangoTestSuiteRunner):
         else:
             apps = map(lambda app: get_module_dirname(app, "tests"), app_names)
 
+
+        apps = filter(exists, apps)
 
         nose_argv.extend(apps)
 
