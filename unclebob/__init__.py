@@ -40,7 +40,6 @@ try:
 
     class NoseTestRunner(DjangoTestSuiteRunner):
         def run_tests(self, test_labels, extra_tests=None, **kwargs):
-
             # Pretend it's a production environment.
             settings.DEBUG = False
 
@@ -48,11 +47,13 @@ try:
             IGNORED_APPS.extend(getattr(settings, 'UNCLEBOB_IGNORED_APPS', []))
 
             nose_argv = [
-                'nosetests', '-s', '--verbosity=2', '--exe', '--with-coverage', '--cover-inclusive', '--cover-erase',
+                'nosetests', '-s', '--verbosity=%d' % self.verbosity, '--exe',
+                '--with-coverage', '--cover-inclusive', '--cover-erase',
             ]
             nose_argv.extend(getattr(settings, 'UNCLEBOB_EXTRA_NOSE_ARGS', []))
             package = split(dirname(__file__))[-1]
-            app_names = [app for app in settings.INSTALLED_APPS if not app.startswith("django.") and app not in IGNORED_APPS]
+            app_names = test_labels or [app for app in settings.INSTALLED_APPS \
+                         if not app.startswith("django.") and app not in IGNORED_APPS]
 
             nose_argv.extend(map(lambda name: "--cover-package=%s" % name, app_names))
             nose_argv.extend(map(lambda name: "--cover-package=%s.%s" % (package, name), app_names))
@@ -64,19 +65,19 @@ try:
 
             # not unitary by default, which means, let's use the test
             # database and stuff...
-            not_unitary = True
+            not_unitary = '--unit' not in sys.argv
+            specific_kind = False
 
-            if sys.argv[-1] in ('unit', 'functional', 'integration'):
-                kind = sys.argv[-1]
-                apps = map(lambda app: get_module_dirname(app, "tests", kind), app_names)
-                not_unitary = kind != 'unit'
+            for kind in ('--unit', '--functional', '--integration'):
+                if kind in sys.argv:
+                    apps = map(lambda app: get_module_dirname(app, "tests", kind), app_names)
+                    specific_kind = True
+                    break
 
-            else:
+            if not specific_kind:
                 apps = map(lambda app: get_module_dirname(app, "tests"), app_names)
 
-
             apps = filter(exists, apps)
-
             nose_argv.extend(apps)
 
             if not_unitary:
