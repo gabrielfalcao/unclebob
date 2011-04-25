@@ -1,4 +1,3 @@
-# #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # <unclebob - django tool for running tests organized between unit, functional and integration>
 # Copyright (C) <2011>  Gabriel Falcão <gabriel@nacaolivre.org>
@@ -23,27 +22,4 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
-
-import os
-
-from unclebob.version import version
-from setuptools import setup
-
-def get_packages():
-    # setuptools can't do the job :(
-    packages = []
-    for root, dirnames, filenames in os.walk('unclebob'):
-        if '__init__.py' in filenames:
-            packages.append(".".join(os.path.split(root)).strip("."))
-
-    return packages
-
-setup(name='unclebob',
-    version=version,
-    description='Django testing tool set',
-    author=u'Gabriel Falcao',
-    author_email='gabriel@nacaolivre.org',
-    url='http://github.com/gabrielfalcao/unclebob',
-    install_requires=['nose', 'sure'],
-    packages=get_packages(),
-)
+version = '0.1'
