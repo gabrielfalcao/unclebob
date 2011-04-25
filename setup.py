@@ -47,5 +47,6 @@ setup(name='unclebob',
     author=u'Gabriel Falcao',
     author_email='gabriel@nacaolivre.org',
     url='http://github.com/gabrielfalcao/unclebob',
+    install_requires=['nose', 'sure'],
     packages=get_packages(),
 )
