@@ -85,7 +85,7 @@ try:
                 old_config = self.setup_databases()
                 migrate = getattr(settings, 'SOUTH_TESTS_MIGRATE', False)
                 if 'south' in settings.INSTALLED_APPS and migrate:
-                    call_command('migrate', fake=True)
+                    call_command('migrate')
             passed = nose.run(argv=nose_argv)
 
             if not_unitary:
