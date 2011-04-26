@@ -48,7 +48,7 @@ try:
 
             nose_argv = [
                 'nosetests', '-s', '--verbosity=%d' % self.verbosity, '--exe',
-                '--with-coverage', '--cover-inclusive', '--cover-erase',
+                '--cover-inclusive', '--cover-erase',
             ]
             nose_argv.extend(getattr(settings, 'UNCLEBOB_EXTRA_NOSE_ARGS', []))
             package = split(dirname(__file__))[-1]
