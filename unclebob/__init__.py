@@ -48,7 +48,7 @@ try:
 
             nose_argv = [
                 'nosetests', '-s', '--verbosity=%d' % self.verbosity, '--exe',
-                '--with-coverage', '--cover-inclusive', '--cover-erase',
+                '--cover-inclusive', '--cover-erase',
             ]
             nose_argv.extend(getattr(settings, 'UNCLEBOB_EXTRA_NOSE_ARGS', []))
             package = split(dirname(__file__))[-1]
@@ -83,8 +83,9 @@ try:
             if not_unitary:
                 self.setup_test_environment()
                 old_config = self.setup_databases()
-                if 'south' in settings.INSTALLED_APPS:
-                    call_command('migrate', fake=True)
+                migrate = getattr(settings, 'SOUTH_TESTS_MIGRATE', False)
+                if 'south' in settings.INSTALLED_APPS and migrate:
+                    call_command('migrate')
             passed = nose.run(argv=nose_argv)
 
             if not_unitary:
