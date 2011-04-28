@@ -26,7 +26,6 @@
 
 import os
 
-from unclebob.version import version
 from setuptools import setup
 
 def get_packages():
@@ -39,11 +38,11 @@ def get_packages():
     return packages
 
 setup(name='unclebob',
-    version=version,
+    version='0.1',
     description='Django testing tool set',
     author=u'Gabriel Falcao',
     author_email='gabriel@nacaolivre.org',
     url='http://github.com/gabrielfalcao/unclebob',
-    install_requires=['nose', 'sure'],
+    install_requires=['nose', 'sure', 'Django'],
     packages=get_packages(),
 )
