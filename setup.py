@@ -25,8 +25,8 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 import os
-
 from setuptools import setup
+
 
 def get_packages():
     # setuptools can't do the job :(
@@ -38,7 +38,7 @@ def get_packages():
     return packages
 
 setup(name='unclebob',
-    version='0.1',
+    version='0.2',
     description='Django testing tool set',
     author=u'Gabriel Falcao',
     author_email='gabriel@nacaolivre.org',

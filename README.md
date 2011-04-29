@@ -1,5 +1,5 @@
 # unclebob
-> Version 0.1
+> Version 0.2
 
 # What
 
@@ -35,16 +35,24 @@ just use the regular **test** command:
 
 ## running only the unit tests
 
-    python manage.py unit
+    python manage.py test --unit
 
 ## running only the functional tests
 
-    python manage.py functional
+    python manage.py test --functional
 
 ## running only the integration tests
 
-    python manage.py integration
+    python manage.py test --integration
 
+
+## running only a specific path
+
+    python manage.py test path/to/app/tests
+
+or
+
+    python manage.py test path/to/app/tests/unit
 
 # warning:
 
