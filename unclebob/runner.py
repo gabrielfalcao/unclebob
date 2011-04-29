@@ -136,7 +136,6 @@ class NoseTestRunner(DjangoTestSuiteRunner):
         if not_unitary:
             # not unitary means that should create a test database and
             # migrate if needed (support only south now)
-
             self.setup_test_environment()
             old_config = self.setup_databases()
             self.migrate_to_south_if_needed()
