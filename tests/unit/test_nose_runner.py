@@ -311,6 +311,7 @@ def test_run_tests_simple_with_labels(context, nose_run):
 
     context.runner.migrate_to_south_if_needed = mock.Mock()
 
+    nose_run.return_value = 0
     context.runner.run_tests(['app', 'labels'], **context.options)
 
     context.runner.get_nose_argv.assert_called_once_with(
@@ -324,6 +325,99 @@ def test_run_tests_simple_with_labels(context, nose_run):
         'i', 'am', 'the', 'argv',
         '/path/to/app',
         '/and/another/4/labels',
+    ])
+    context.runner.teardown_databases.assert_called_once_with(
+        'input 4 teardown databases',
+    )
+    context.runner.migrate_to_south_if_needed.assert_called_once_with()
+
+
+@mock.patch.object(nose, 'run')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_run_without_labels_gets_the_installed_apps(context, nose_run):
+    u"ability to run tests without labels will look for INSTALLED_APPS"
+
+    context.runner.get_apps = mock.Mock()
+    context.runner.get_apps.return_value = ['app1', 'app_two']
+
+    context.runner.get_nose_argv = mock.Mock()
+    context.runner.get_nose_argv.return_value = ['i', 'am', 'the', 'argv']
+
+    context.runner.get_paths_for = mock.Mock()
+    context.runner.get_paths_for.return_value = [
+        '/path/to/app1/tests',
+        '/and/another/path/to/app_two/tests',
+    ]
+
+    context.runner.setup_test_environment = mock.Mock()
+    context.runner.teardown_test_environment = mock.Mock()
+
+    context.runner.setup_databases = mock.Mock()
+    context.runner.setup_databases.return_value = 'input 4 teardown databases'
+    context.runner.teardown_databases = mock.Mock()
+
+    context.runner.migrate_to_south_if_needed = mock.Mock()
+
+    nose_run.return_value = 0
+    context.runner.run_tests([], **context.options)
+
+    context.runner.get_nose_argv.assert_called_once_with(
+        covered_package_names=['app1', 'app_two'],
+    )
+    context.runner.get_paths_for.assert_called_once_with(
+        ['/path/to/app1/tests', '/and/another/path/to/app_two/tests'],
+        appending=['tests'],
+    )
+    nose_run.assert_called_once_with(argv=[
+        'i', 'am', 'the', 'argv',
+        '/path/to/app1/tests',
+        '/and/another/path/to/app_two/tests',
+    ])
+    context.runner.teardown_databases.assert_called_once_with(
+        'input 4 teardown databases',
+    )
+    context.runner.migrate_to_south_if_needed.assert_called_once_with()
+
+@mock.patch.object(nose, 'run')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_when_nose_run_fails(context, nose_run):
+    u"ability to run tests without labels will look for INSTALLED_APPS"
+
+    context.runner.get_apps = mock.Mock()
+    context.runner.get_apps.return_value = ['app1', 'app_two']
+
+    context.runner.get_nose_argv = mock.Mock()
+    context.runner.get_nose_argv.return_value = ['i', 'am', 'the', 'argv']
+
+    context.runner.get_paths_for = mock.Mock()
+    context.runner.get_paths_for.return_value = [
+        '/path/to/app1/tests',
+        '/and/another/path/to/app_two/tests',
+    ]
+
+    context.runner.setup_test_environment = mock.Mock()
+    context.runner.teardown_test_environment = mock.Mock()
+
+    context.runner.setup_databases = mock.Mock()
+    context.runner.setup_databases.return_value = 'input 4 teardown databases'
+    context.runner.teardown_databases = mock.Mock()
+
+    context.runner.migrate_to_south_if_needed = mock.Mock()
+
+    nose_run.return_value = 1
+    context.runner.run_tests([], **context.options)
+
+    context.runner.get_nose_argv.assert_called_once_with(
+        covered_package_names=['app1', 'app_two'],
+    )
+    context.runner.get_paths_for.assert_called_once_with(
+        ['/path/to/app1/tests', '/and/another/path/to/app_two/tests'],
+        appending=['tests'],
+    )
+    nose_run.assert_called_once_with(argv=[
+        'i', 'am', 'the', 'argv',
+        '/path/to/app1/tests',
+        '/and/another/path/to/app_two/tests',
     ])
     context.runner.teardown_databases.assert_called_once_with(
         'input 4 teardown databases',

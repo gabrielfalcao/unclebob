@@ -14,16 +14,18 @@ check_dependencies:
 
 unit: clean
 	@echo "Running unit tests ..."
-	@nosetests -s --verbosity=2 --with-coverage --cover-inclusive tests/unit --cover-package=unclebob
 	@python manage.py test --unit
+	@nosetests -s --verbosity=2 --with-coverage --cover-inclusive tests/unit --cover-package=unclebob
 
 functional: clean
 	@echo "Running functional tests ..."
 	@python manage.py test --functional
+	@nosetests -s --verbosity=2 --cover-erase tests/functional
 
 integration: clean
 	@echo "Running integration tests ..."
 	@python manage.py test --integration
+	@nosetests -s --verbosity=2 --cover-erase tests/integration
 
 clean:
 	@printf "Cleaning up files that are already in .gitignore... "
