@@ -23,6 +23,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
+import os
 import imp
 import mock
 
@@ -199,12 +200,14 @@ def test_doesnt_migrate_without_south_tests_migrate(context, call_command):
     context.runner.migrate_to_south_if_needed()
 
 
+@mock.patch.object(os.path, 'exists')
 @mock.patch.object(imp, 'load_module')
 @mock.patch.object(imp, 'find_module')
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
 def test_get_paths_for_imports_the_module_and_returns_its_path(context,
                                                                find_module,
-                                                               load_module):
+                                                               load_module,
+                                                               exists):
     u"get_paths_for retrieves the module dirname"
 
     module_mock = mock.Mock()
@@ -212,6 +215,7 @@ def test_get_paths_for_imports_the_module_and_returns_its_path(context,
 
     find_module.return_value = ('file', 'pathname', 'description')
     load_module.return_value = module_mock
+    exists.return_value = True
 
     expected_path = context.runner.get_paths_for(['bazfoobar'])
     assert that(expected_path).equals(['/path/to'])
@@ -222,10 +226,12 @@ def test_get_paths_for_imports_the_module_and_returns_its_path(context,
     )
 
 
+@mock.patch.object(os.path, 'exists')
 @mock.patch.object(imp, 'load_module')
 @mock.patch.object(imp, 'find_module')
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
-def test_get_paths_appends_more_paths(context, find_module, load_module):
+def test_get_paths_appends_more_paths(context, find_module, load_module,
+                                      exists):
     u"get_paths_for retrieves the module dirname and appends stuff"
 
     module_mock = mock.Mock()
@@ -233,12 +239,42 @@ def test_get_paths_appends_more_paths(context, find_module, load_module):
 
     find_module.return_value = ('file', 'pathname', 'description')
     load_module.return_value = module_mock
+    exists.return_value = True
 
     expected_path = context.runner.get_paths_for(
         ['bazfoobar'],
         appending=['one', 'more', 'place'],
     )
     assert that(expected_path).equals(['/path/to/one/more/place'])
+
+    find_module.assert_called_once_with('bazfoobar')
+    load_module.assert_called_once_with(
+        'bazfoobar', 'file', 'pathname', 'description',
+    )
+
+
+@mock.patch.object(os.path, 'exists')
+@mock.patch.object(imp, 'load_module')
+@mock.patch.object(imp, 'find_module')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_get_paths_ignore_paths_that_doesnt_exist(context,
+                                                  find_module,
+                                                  load_module,
+                                                  exists):
+    u"get_paths_for ignore paths that doesn't exist"
+
+    module_mock = mock.Mock()
+    module_mock.__file__ = '/path/to/file.py'
+
+    find_module.return_value = ('file', 'pathname', 'description')
+    load_module.return_value = module_mock
+    exists.return_value = False
+
+    expected_path = context.runner.get_paths_for(
+        ['bazfoobar'],
+        appending=['one', 'more', 'place'],
+    )
+    assert that(expected_path).equals([])
 
     find_module.assert_called_once_with('bazfoobar')
     load_module.assert_called_once_with(

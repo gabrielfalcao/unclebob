@@ -25,7 +25,8 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 import imp
 import nose
-from os.path import join, abspath, dirname
+from os import path as os_path
+from os.path import dirname, join, abspath
 
 from django.conf import settings
 from django.core import management
@@ -84,7 +85,10 @@ class NoseTestRunner(DjangoTestSuiteRunner):
             if isinstance(appending, (list, tuple)):
                 appendees = appending
 
-            paths.append(join(abspath(dirname(module.__file__)), *appendees))
+            path = join(abspath(dirname(module.__file__)), *appendees)
+
+            if os_path.exists(path):
+                paths.append(path)
 
         return paths
 
@@ -129,7 +133,6 @@ class NoseTestRunner(DjangoTestSuiteRunner):
             old_config = self.setup_databases()
             self.migrate_to_south_if_needed()
 
-        import ipdb; ipdb.set_trace()
         passed = nose.run(argv=nose_argv)
 
         if not_unitary:
