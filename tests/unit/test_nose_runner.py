@@ -682,3 +682,29 @@ def test_running_unit_func_n_integration_without_labels(context, nose_run):
     context.runner.setup_databases.assert_called_once_with()
     context.runner.teardown_databases.assert_called_once_with("TEST DB CONFIG")
     context.runner.migrate_to_south_if_needed.assert_called_once_with()
+
+
+@mock.patch.object(os.path, 'exists')
+@mock.patch.object(imp, 'load_module')
+@mock.patch.object(imp, 'find_module')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_get_paths_for_accept_paths_as_parameter_checking_if_exists(
+    context,
+    find_module,
+    load_module,
+    exists):
+    u"get_paths_for also takes paths, and check if exists"
+
+    find_module.side_effect = ImportError('no module named /some/path')
+
+    exists.side_effect = lambda x: x == '/path/to/file.py'
+
+    expected_paths = context.runner.get_paths_for(
+        ['/path/to/file.py'],
+        appending=['more', 'members'],
+    )
+
+    assert that(expected_paths).equals(['/path/to/file.py'])
+
+    find_module.assert_called_once_with('/path/to/file.py')
+    assert that(load_module.call_count).equals(0)

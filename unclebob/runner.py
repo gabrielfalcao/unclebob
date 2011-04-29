@@ -26,7 +26,7 @@
 import imp
 import nose
 from os import path as os_path
-from os.path import dirname, join, abspath
+from os.path import dirname, join
 
 from django.conf import settings
 from django.core import management
@@ -77,15 +77,23 @@ class NoseTestRunner(DjangoTestSuiteRunner):
 
     def get_paths_for(self, appnames, appending=None):
         paths = []
+
         for name in appnames:
-            params = imp.find_module(name)
-            module = imp.load_module(name, *params)
+            try:
+                params = imp.find_module(name)
+                module = imp.load_module(name, *params)
+                module_filename = module.__file__
+                module_path = dirname(module_filename)
+            except ImportError:
+                module_path = name
+                if os_path.exists(module_path):
+                    paths.append(module_path)
 
             appendees = []
             if isinstance(appending, (list, tuple)):
                 appendees = appending
 
-            path = join(abspath(dirname(module.__file__)), *appendees)
+            path = join(os_path.abspath(module_path), *appendees)
 
             if os_path.exists(path):
                 paths.append(path)
