@@ -26,6 +26,7 @@
 import os
 import imp
 import mock
+import nose
 
 from django.conf import settings
 from django.core import management
@@ -43,6 +44,11 @@ def get_settings(obj):
 def prepare_stuff(context):
     context.runner = NoseTestRunner()
     context.old_settings = get_settings(settings)
+    context.options = {
+        'is_unit': False,
+        'is_functional': False,
+        'is_integration': False,
+    }
 
 
 def and_cleanup_the_mess(context):
@@ -280,3 +286,46 @@ def test_get_paths_ignore_paths_that_doesnt_exist(context,
     load_module.assert_called_once_with(
         'bazfoobar', 'file', 'pathname', 'description',
     )
+
+
+@mock.patch.object(nose, 'run')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_run_tests_simple_with_labels(context, nose_run):
+    u"ability to run tests just with labels"
+
+    context.runner.get_nose_argv = mock.Mock()
+    context.runner.get_nose_argv.return_value = ['i', 'am', 'the', 'argv']
+
+    context.runner.get_paths_for = mock.Mock()
+    context.runner.get_paths_for.return_value = [
+        '/path/to/app',
+        '/and/another/4/labels',
+    ]
+
+    context.runner.setup_test_environment = mock.Mock()
+    context.runner.teardown_test_environment = mock.Mock()
+
+    context.runner.setup_databases = mock.Mock()
+    context.runner.setup_databases.return_value = 'input 4 teardown databases'
+    context.runner.teardown_databases = mock.Mock()
+
+    context.runner.migrate_to_south_if_needed = mock.Mock()
+
+    context.runner.run_tests(['app', 'labels'], **context.options)
+
+    context.runner.get_nose_argv.assert_called_once_with(
+        covered_package_names=['app', 'labels'],
+    )
+    context.runner.get_paths_for.assert_called_once_with(
+        ['/path/to/app', '/and/another/4/labels'],
+        appending=['tests'],
+    )
+    nose_run.assert_called_once_with(argv=[
+        'i', 'am', 'the', 'argv',
+        '/path/to/app',
+        '/and/another/4/labels',
+    ])
+    context.runner.teardown_databases.assert_called_once_with(
+        'input 4 teardown databases',
+    )
+    context.runner.migrate_to_south_if_needed.assert_called_once_with()
