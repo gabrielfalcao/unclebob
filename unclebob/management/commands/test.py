@@ -23,4 +23,41 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
-from unclebob.runner import NoseTestRunner
+
+import sys
+from optparse import make_option
+from django.core.management.commands import test
+
+
+def add_option(kind):
+    msg = 'Look for {0} tests on appname/tests/{0}/*test*.py'
+    return make_option(
+        '--%s' % kind, action='store_true',
+        dest='is_%s' % kind, default=True,
+        help=msg.format(kind))
+
+
+class Command(test.Command):
+    option_list = test.Command.option_list + (
+        add_option('unit'),
+        add_option('functional'),
+        add_option('integration'),
+    )
+
+    def handle(self, *test_labels, **options):
+        from django.conf import settings
+        from django.test.utils import get_runner
+
+        TestRunner = get_runner(settings)
+        verbosity = int(options.get('verbosity', 1))
+        interactive = options.get('interactive', True)
+        failfast = options.get('failfast', False)
+        TestRunner = get_runner(settings)
+
+        test_runner = TestRunner(verbosity=verbosity,
+                                 interactive=interactive,
+                                 failfast=failfast)
+
+        failures = test_runner.run_tests(test_labels, **options)
+        if failures:
+            sys.exit(bool(failures))
