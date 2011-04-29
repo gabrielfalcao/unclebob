@@ -110,18 +110,18 @@ class NoseTestRunner(DjangoTestSuiteRunner):
         is_functional = kwargs['is_functional']
         is_integration = kwargs['is_integration']
 
-        not_unitary = not is_unit
+        not_unitary = not is_unit or (is_functional or is_integration)
         specific_kind = is_unit or is_functional or is_integration
 
         apps = []
 
         for kind in ('unit', 'functional', 'integration'):
             if kwargs['is_%s' % kind] is True:
-                apps.extend(self.get_paths_for(apps,
+                apps.extend(self.get_paths_for(app_names,
                                                appending=['tests', kind]))
 
         if not specific_kind:
-            apps.extend(self.get_paths_for(apps, appending=['tests']))
+            apps.extend(self.get_paths_for(app_names, appending=['tests']))
 
         nose_argv.extend(apps)
 

@@ -318,7 +318,7 @@ def test_run_tests_simple_with_labels(context, nose_run):
         covered_package_names=['app', 'labels'],
     )
     context.runner.get_paths_for.assert_called_once_with(
-        ['/path/to/app', '/and/another/4/labels'],
+        ['app', 'labels'],
         appending=['tests'],
     )
     nose_run.assert_called_once_with(argv=[
@@ -365,7 +365,7 @@ def test_run_without_labels_gets_the_installed_apps(context, nose_run):
         covered_package_names=['app1', 'app_two'],
     )
     context.runner.get_paths_for.assert_called_once_with(
-        ['/path/to/app1/tests', '/and/another/path/to/app_two/tests'],
+        ['app1', 'app_two'],
         appending=['tests'],
     )
     nose_run.assert_called_once_with(argv=[
@@ -378,10 +378,11 @@ def test_run_without_labels_gets_the_installed_apps(context, nose_run):
     )
     context.runner.migrate_to_south_if_needed.assert_called_once_with()
 
+
 @mock.patch.object(nose, 'run')
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
 def test_when_nose_run_fails(context, nose_run):
-    u"ability to run tests without labels will look for INSTALLED_APPS"
+    u"testing when the nose.run fails"
 
     context.runner.get_apps = mock.Mock()
     context.runner.get_apps.return_value = ['app1', 'app_two']
@@ -411,7 +412,7 @@ def test_when_nose_run_fails(context, nose_run):
         covered_package_names=['app1', 'app_two'],
     )
     context.runner.get_paths_for.assert_called_once_with(
-        ['/path/to/app1/tests', '/and/another/path/to/app_two/tests'],
+        ['app1', 'app_two'],
         appending=['tests'],
     )
     nose_run.assert_called_once_with(argv=[
@@ -422,4 +423,262 @@ def test_when_nose_run_fails(context, nose_run):
     context.runner.teardown_databases.assert_called_once_with(
         'input 4 teardown databases',
     )
+    context.runner.migrate_to_south_if_needed.assert_called_once_with()
+
+
+@mock.patch.object(nose, 'run')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_running_unit_tests_without_app_labels(context, nose_run):
+    u"running with --unit without app labels won't touch the database at all"
+
+    context.options['is_unit'] = True
+
+    context.runner.get_apps = mock.Mock()
+    context.runner.get_apps.return_value = ['john', 'doe']
+
+    context.runner.get_nose_argv = mock.Mock()
+    context.runner.get_nose_argv.return_value = ['nose', 'argv']
+
+    context.runner.get_paths_for = mock.Mock()
+    context.runner.get_paths_for.return_value = [
+        '/apps/john/tests/unit',
+        '/apps/doe/tests/unit',
+    ]
+
+    context.runner.setup_test_environment = mock.Mock()
+    context.runner.teardown_test_environment = mock.Mock()
+
+    context.runner.setup_databases = mock.Mock()
+    context.runner.teardown_databases = mock.Mock()
+    context.runner.migrate_to_south_if_needed = mock.Mock()
+
+    nose_run.return_value = 0
+    context.runner.run_tests([], **context.options)
+
+    context.runner.get_nose_argv.assert_called_once_with(
+        covered_package_names=['john', 'doe'],
+    )
+    context.runner.get_paths_for.assert_called_once_with(
+        ['john', 'doe'],
+        appending=['tests', 'unit'],
+    )
+    nose_run.assert_called_once_with(argv=[
+        'nose', 'argv',
+        '/apps/john/tests/unit',
+        '/apps/doe/tests/unit',
+    ])
+
+    assert that(context.runner.setup_databases.call_count).equals(0)
+    assert that(context.runner.teardown_databases.call_count).equals(0)
+    assert that(context.runner.migrate_to_south_if_needed.call_count).equals(0)
+
+
+@mock.patch.object(nose, 'run')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_running_unit_n_functional_without_labels(context, nose_run):
+    u"if get --unit but also --functional then it should use a test database"
+
+    context.options['is_unit'] = True
+    context.options['is_functional'] = True
+
+    context.runner.get_apps = mock.Mock()
+    context.runner.get_apps.return_value = ['john', 'doe']
+
+    context.runner.get_nose_argv = mock.Mock()
+    context.runner.get_nose_argv.return_value = ['nose', 'argv']
+
+    context.runner.get_paths_for = mock.Mock()
+
+    expected_kinds = ['unit', 'functional']
+
+    def mock_get_paths_for(names, appending):
+        k = expected_kinds.pop(0)
+        assert that(names).is_a(list)
+        assert that(appending).is_a(list)
+        assert that(names).equals(['john', 'doe'])
+        assert that(appending).equals(['tests', k])
+        return [
+            '/apps/john/tests/%s' % k,
+            '/apps/doe/tests/%s' % k,
+        ]
+
+    context.runner.get_paths_for.side_effect = mock_get_paths_for
+
+    context.runner.setup_test_environment = mock.Mock()
+    context.runner.teardown_test_environment = mock.Mock()
+
+    context.runner.setup_databases = mock.Mock()
+    context.runner.setup_databases.return_value = "TEST DB CONFIG"
+
+    context.runner.teardown_databases = mock.Mock()
+    context.runner.migrate_to_south_if_needed = mock.Mock()
+
+    nose_run.return_value = 0
+    context.runner.run_tests([], **context.options)
+
+    context.runner.get_nose_argv.assert_called_once_with(
+        covered_package_names=['john', 'doe'],
+    )
+
+    get_paths_for = context.runner.get_paths_for
+
+    assert that(get_paths_for.call_count).equals(2)
+
+    assert that(get_paths_for.call_args_list).equals([
+        ((['john', 'doe'],), {'appending':['tests', 'unit']}),
+        ((['john', 'doe'],), {'appending':['tests', 'functional']}),
+    ])
+
+    nose_run.assert_called_once_with(argv=[
+        'nose', 'argv',
+        '/apps/john/tests/unit',
+        '/apps/doe/tests/unit',
+        '/apps/john/tests/functional',
+        '/apps/doe/tests/functional',
+    ])
+
+    context.runner.setup_databases.assert_called_once_with()
+    context.runner.teardown_databases.assert_called_once_with("TEST DB CONFIG")
+    context.runner.migrate_to_south_if_needed.assert_called_once_with()
+
+
+@mock.patch.object(nose, 'run')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_running_unit_n_integration_without_labels(context, nose_run):
+    u"if get --unit but also --integration then it should use a test database"
+
+    context.options['is_unit'] = True
+    context.options['is_integration'] = True
+
+    context.runner.get_apps = mock.Mock()
+    context.runner.get_apps.return_value = ['john', 'doe']
+
+    context.runner.get_nose_argv = mock.Mock()
+    context.runner.get_nose_argv.return_value = ['nose', 'argv']
+
+    context.runner.get_paths_for = mock.Mock()
+
+    expected_kinds = ['unit', 'integration']
+
+    def mock_get_paths_for(names, appending):
+        k = expected_kinds.pop(0)
+        assert that(names).is_a(list)
+        assert that(appending).is_a(list)
+        assert that(names).equals(['john', 'doe'])
+        assert that(appending).equals(['tests', k])
+        return [
+            '/apps/john/tests/%s' % k,
+            '/apps/doe/tests/%s' % k,
+        ]
+
+    context.runner.get_paths_for.side_effect = mock_get_paths_for
+
+    context.runner.setup_test_environment = mock.Mock()
+    context.runner.teardown_test_environment = mock.Mock()
+
+    context.runner.setup_databases = mock.Mock()
+    context.runner.setup_databases.return_value = "TEST DB CONFIG"
+
+    context.runner.teardown_databases = mock.Mock()
+    context.runner.migrate_to_south_if_needed = mock.Mock()
+
+    nose_run.return_value = 0
+    context.runner.run_tests([], **context.options)
+
+    context.runner.get_nose_argv.assert_called_once_with(
+        covered_package_names=['john', 'doe'],
+    )
+
+    get_paths_for = context.runner.get_paths_for
+
+    assert that(get_paths_for.call_count).equals(2)
+
+    assert that(get_paths_for.call_args_list).equals([
+        ((['john', 'doe'],), {'appending':['tests', 'unit']}),
+        ((['john', 'doe'],), {'appending':['tests', 'integration']}),
+    ])
+
+    nose_run.assert_called_once_with(argv=[
+        'nose', 'argv',
+        '/apps/john/tests/unit',
+        '/apps/doe/tests/unit',
+        '/apps/john/tests/integration',
+        '/apps/doe/tests/integration',
+    ])
+
+    context.runner.setup_databases.assert_called_once_with()
+    context.runner.teardown_databases.assert_called_once_with("TEST DB CONFIG")
+    context.runner.migrate_to_south_if_needed.assert_called_once_with()
+
+
+@mock.patch.object(nose, 'run')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_running_unit_n_integration_without_labels(context, nose_run):
+    u"if get --unit --functional and --integration"
+
+    context.options['is_unit'] = True
+    context.options['is_functional'] = True
+    context.options['is_integration'] = True
+
+    context.runner.get_apps = mock.Mock()
+    context.runner.get_apps.return_value = ['john', 'doe']
+
+    context.runner.get_nose_argv = mock.Mock()
+    context.runner.get_nose_argv.return_value = ['nose', 'argv']
+
+    context.runner.get_paths_for = mock.Mock()
+
+    expected_kinds = ['unit', 'functional', 'integration']
+
+    def mock_get_paths_for(names, appending):
+        k = expected_kinds.pop(0)
+        assert that(names).is_a(list)
+        assert that(appending).is_a(list)
+        assert that(names).equals(['john', 'doe'])
+        assert that(appending).equals(['tests', k])
+        return [
+            '/apps/john/tests/%s' % k,
+            '/apps/doe/tests/%s' % k,
+        ]
+
+    context.runner.get_paths_for.side_effect = mock_get_paths_for
+
+    context.runner.setup_test_environment = mock.Mock()
+    context.runner.teardown_test_environment = mock.Mock()
+
+    context.runner.setup_databases = mock.Mock()
+    context.runner.setup_databases.return_value = "TEST DB CONFIG"
+
+    context.runner.teardown_databases = mock.Mock()
+    context.runner.migrate_to_south_if_needed = mock.Mock()
+
+    nose_run.return_value = 0
+    context.runner.run_tests([], **context.options)
+
+    context.runner.get_nose_argv.assert_called_once_with(
+        covered_package_names=['john', 'doe'],
+    )
+
+    get_paths_for = context.runner.get_paths_for
+
+    assert that(get_paths_for.call_count).equals(3)
+
+    assert that(get_paths_for.call_args_list).equals([
+        ((['john', 'doe'],), {'appending':['tests', 'unit']}),
+        ((['john', 'doe'],), {'appending':['tests', 'functional']}),
+        ((['john', 'doe'],), {'appending':['tests', 'integration']}),
+    ])
+
+    nose_run.assert_called_once_with(argv=[
+        'nose', 'argv',
+        '/apps/john/tests/unit',
+        '/apps/doe/tests/unit',
+        '/apps/john/tests/functional',
+        '/apps/doe/tests/functional',
+        '/apps/john/tests/integration',
+        '/apps/doe/tests/integration',
+    ])
+
+    context.runner.setup_databases.assert_called_once_with()
+    context.runner.teardown_databases.assert_called_once_with("TEST DB CONFIG")
     context.runner.migrate_to_south_if_needed.assert_called_once_with()
