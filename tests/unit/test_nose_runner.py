@@ -613,7 +613,7 @@ def test_running_unit_n_integration_without_labels(context, nose_run):
 
 @mock.patch.object(nose, 'run')
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
-def test_running_unit_n_integration_without_labels(context, nose_run):
+def test_running_unit_func_n_integration_without_labels(context, nose_run):
     u"if get --unit --functional and --integration"
 
     context.options['is_unit'] = True
