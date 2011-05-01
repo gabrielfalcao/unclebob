@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import unclebob
+
 from os.path import dirname, abspath, join
 LOCAL_FILE = lambda *path: join(abspath(dirname(__file__)), *path)
 sys.path.append(LOCAL_FILE('apps'))
@@ -66,10 +68,9 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'unclebob',
     'south',
     'foo',
     'bar',
 )
-
-TEST_RUNNER = 'unclebob.NoseTestRunner'
+TEST_RUNNER = 'unclebob.runners.Nose'
+unclebob.take_care_of_my_tests()

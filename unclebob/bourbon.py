@@ -23,41 +23,34 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
-
-import sys
-from optparse import make_option
-from django.core.management.commands import test
-
-
-def add_option(kind):
-    msg = 'Look for {0} tests on appname/tests/{0}/*test*.py'
-    return make_option(
-        '--%s' % kind, action='store_true',
-        dest='is_%s' % kind, default=True,
-        help=msg.format(kind))
+from functools import wraps
+from unclebob.options import basic
+from django.core import management
 
 
-class Command(test.Command):
-    option_list = test.Command.option_list + (
-        add_option('unit'),
-        add_option('functional'),
-        add_option('integration'),
-    )
+def taste():
+    "monkey patches the django test command"
+    def patch_get_commands(get_commands):
+        @wraps(get_commands)
+        def the_patched(*args, **kw):
+            res = get_commands(*args, **kw)
+            tester = res.get('test', None)
+            if tester is None:
+                return res
+            if isinstance(tester, basestring):
+                tester = management.load_command_class(tester, 'test')
 
-    def handle(self, *test_labels, **options):
-        from django.conf import settings
-        from django.test.utils import get_runner
+            new_options = basic[:]
 
-        TestRunner = get_runner(settings)
-        verbosity = int(options.get('verbosity', 1))
-        interactive = options.get('interactive', True)
-        failfast = options.get('failfast', False)
-        TestRunner = get_runner(settings)
+            ignored_opts = ('--unit', '--functional', '--integration')
+            for opt in tester.option_list:
+                if opt.get_opt_string() not in ignored_opts:
+                    new_options.insert(0, opt)
 
-        test_runner = TestRunner(verbosity=verbosity,
-                                 interactive=interactive,
-                                 failfast=failfast)
+            tester.option_list = tuple(new_options)
+            res['test'] = tester
+            return res
 
-        failures = test_runner.run_tests(test_labels, **options)
-        if failures:
-            sys.exit(bool(failures))
+        return the_patched
+
+    management.get_commands = patch_get_commands(management.get_commands)

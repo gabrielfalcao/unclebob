@@ -27,13 +27,17 @@ import imp
 import nose
 from os import path as os_path
 from os.path import dirname, join
+from optparse import OptionParser
 
 from django.conf import settings
 from django.core import management
 from django.test.simple import DjangoTestSuiteRunner
 
 
-class NoseTestRunner(DjangoTestSuiteRunner):
+from unclebob.options import basic
+
+
+class Nose(DjangoTestSuiteRunner):
     IGNORED_APPS = ['unclebob', 'south']
 
     def get_setting_or_list(self, name):
@@ -43,6 +47,31 @@ class NoseTestRunner(DjangoTestSuiteRunner):
         apps = self.IGNORED_APPS[:]
         apps.extend(self.get_setting_or_list('UNCLEBOB_IGNORED_APPS'))
         return apps
+
+    def get_argv_options(self):
+        parser = OptionParser()
+        map(parser.add_option, basic)
+        command = management.get_commands()['test']
+
+        if isinstance(command, basestring):
+            command = management.load_command_class(command, 'test')
+
+        for opt in command.option_list:
+            if opt.get_opt_string() not in (
+                '--unit',
+                '--functional',
+                '--integration',
+            ):
+                parser.add_option(opt)
+
+        (_options, _) = parser.parse_args()
+
+        options = dict(
+            is_unit=_options.is_unit,
+            is_functional=_options.is_functional,
+            is_integration=_options.is_integration,
+        )
+        return options
 
     def get_nose_argv(self, covered_package_names=None):
         packages_to_cover = covered_package_names or []
@@ -103,6 +132,7 @@ class NoseTestRunner(DjangoTestSuiteRunner):
     def migrate_to_south_if_needed(self):
         should_migrate = getattr(settings, 'SOUTH_TESTS_MIGRATE', False)
         if 'south' in settings.INSTALLED_APPS and should_migrate:
+            print "Uncle Bob is running the database migrations..."
             management.call_command('migrate')
 
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
@@ -114,9 +144,11 @@ class NoseTestRunner(DjangoTestSuiteRunner):
 
         old_config = None
 
-        is_unit = kwargs['is_unit']
-        is_functional = kwargs['is_functional']
-        is_integration = kwargs['is_integration']
+        options = self.get_argv_options()
+
+        is_unit = options['is_unit']
+        is_functional = options['is_functional']
+        is_integration = options['is_integration']
 
         not_unitary = not is_unit or (is_functional or is_integration)
         specific_kind = is_unit or is_functional or is_integration
@@ -124,7 +156,7 @@ class NoseTestRunner(DjangoTestSuiteRunner):
         apps = []
 
         for kind in ('unit', 'functional', 'integration'):
-            if kwargs['is_%s' % kind] is True:
+            if options['is_%s' % kind] is True:
                 apps.extend(self.get_paths_for(app_names,
                                                appending=['tests', kind]))
 
@@ -136,9 +168,13 @@ class NoseTestRunner(DjangoTestSuiteRunner):
         if not_unitary:
             # not unitary means that should create a test database and
             # migrate if needed (support only south now)
+            old_verbosity = self.verbosity
+            self.verbosity = 0
+            print "Uncle Bob is preparing the test database..."
             self.setup_test_environment()
             old_config = self.setup_databases()
             self.migrate_to_south_if_needed()
+            self.verbosity = old_verbosity
 
         passed = nose.run(argv=nose_argv)
 

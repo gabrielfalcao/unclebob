@@ -24,15 +24,17 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 import os
+import sys
 import imp
 import mock
 import nose
 
+from StringIO import StringIO
 from django.conf import settings
 from django.core import management
 from sure import that, that_with_context
 
-from unclebob.runner import NoseTestRunner
+from unclebob.runners import Nose
 
 
 def get_settings(obj):
@@ -42,17 +44,22 @@ def get_settings(obj):
 
 
 def prepare_stuff(context):
-    context.runner = NoseTestRunner()
+    context.runner = Nose()
     context.old_settings = get_settings(settings)
     context.options = {
         'is_unit': False,
         'is_functional': False,
         'is_integration': False,
     }
+    sys.stdout = StringIO()
+    sys.stderr = StringIO()
+    context.runner.get_argv_options = lambda: context.options
 
 
 def and_cleanup_the_mess(context):
     del context.runner
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
     original_settings = get_settings(context.old_settings)
     for attr in get_settings(settings):
         if attr not in original_settings:
@@ -64,7 +71,7 @@ def and_cleanup_the_mess(context):
 
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
 def test_nosetestrunner_should_have_some_basic_ignored_apps(context):
-    u"NoseTestRunner should have some basic ignored apps"
+    u"Nose should have some basic ignored apps"
     assert that(context.runner.get_ignored_apps()).equals([
         'unclebob',
         'south',
@@ -85,7 +92,7 @@ def test_get_ignored_apps_gets_extended_by_settings(context):
 
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
 def test_should_have_a_base_nose_argv(context):
-    u"NoseTestRunner.get_nose_argv have a bases to start from"
+    u"Nose.get_nose_argv have a bases to start from"
 
     assert that(context.runner.get_nose_argv()).equals([
         'nosetests', '-s', '--verbosity=1', '--exe',
@@ -96,7 +103,7 @@ def test_should_have_a_base_nose_argv(context):
 
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
 def test_should_allow_extending_base_argv_thru_settings(context):
-    u"NoseTestRunner.get_nose_argv support extending base args thru settings"
+    u"Nose.get_nose_argv support extending base args thru settings"
 
     settings.UNCLEBOB_EXTRA_NOSE_ARGS = [
         '--cover-package="some_module"',
@@ -111,7 +118,7 @@ def test_should_allow_extending_base_argv_thru_settings(context):
 
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
 def test_should_allow_extending_covered_packages(context):
-    u"NoseTestRunner.get_nose_argv easily support extending covered packages"
+    u"Nose.get_nose_argv easily support extending covered packages"
 
     arguments = context.runner.get_nose_argv(covered_package_names=[
         'one_app',
@@ -129,7 +136,7 @@ def test_should_allow_extending_covered_packages(context):
 
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
 def test_should_fetch_the_apps_names_thru_get_apps_method(context):
-    u"NoseTestRunner.get_apps filters django builtin apps"
+    u"Nose.get_apps filters django builtin apps"
     settings.INSTALLED_APPS = (
         'django.contrib.sites',
         'django.contrib.messages',
