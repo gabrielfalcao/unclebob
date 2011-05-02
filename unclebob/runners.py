@@ -23,6 +23,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
+
 import imp
 import nose
 from os import path as os_path
@@ -33,8 +34,15 @@ from django.conf import settings
 from django.core import management
 from django.test.simple import DjangoTestSuiteRunner
 
-
 from unclebob.options import basic
+
+
+def unique(lst):
+    l = []
+    for item in lst:
+        if item not in l:
+            l.append(item)
+    return l
 
 
 class Nose(DjangoTestSuiteRunner):
@@ -89,7 +97,14 @@ class Nose(DjangoTestSuiteRunner):
         def cover_these(package):
             return '--cover-package="%s"' % package
 
-        args.extend(map(cover_these, packages_to_cover))
+        def for_packages(package):
+            try:
+                imp.find_module(package)
+                return True
+            except ImportError:
+                return False
+
+        args.extend(map(cover_these, filter(for_packages, packages_to_cover)))
         return args
 
     def get_apps(self):
@@ -127,7 +142,7 @@ class Nose(DjangoTestSuiteRunner):
             if os_path.exists(path):
                 paths.append(path)
 
-        return list(set(paths))
+        return unique(paths)
 
     def migrate_to_south_if_needed(self):
         should_migrate = getattr(settings, 'SOUTH_TESTS_MIGRATE', False)
@@ -177,7 +192,8 @@ class Nose(DjangoTestSuiteRunner):
             self.verbosity = old_verbosity
 
         print "Uncle Bob will run the tests now..."
-        passed = nose.run(argv=nose_argv)
+
+        passed = nose.run(argv=unique(nose_argv))
 
         if not_unitary:
             self.teardown_databases(old_config)

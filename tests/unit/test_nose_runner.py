@@ -116,8 +116,9 @@ def test_should_allow_extending_base_argv_thru_settings(context):
     ])
 
 
+@mock.patch.object(imp, 'find_module')
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
-def test_should_allow_extending_covered_packages(context):
+def test_should_allow_extending_covered_packages(context, find_module):
     u"Nose.get_nose_argv easily support extending covered packages"
 
     arguments = context.runner.get_nose_argv(covered_package_names=[
@@ -132,6 +133,12 @@ def test_should_allow_extending_covered_packages(context):
         '--cover-package="one_app"',
         '--cover-package="otherapp"',
     ])
+    assert that(find_module.call_args_list).equals([
+        (('one_app',), {}),
+        (('otherapp',), {}),
+    ])
+
+    find_module.assert_called_with('otherapp')
 
 
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
@@ -742,3 +749,45 @@ def test_get_paths_for_never_return_duplicates(
     )
 
     assert that(expected_paths).equals(['/path/to/more/members'])
+
+
+@mock.patch.object(nose, 'run')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_nose_is_called_with_unique_args(context, nose_run):
+    u"testing when the nose.run fails"
+
+    context.runner.get_apps = mock.Mock()
+    context.runner.get_apps.return_value = ['app1', 'app_two']
+
+    context.runner.get_nose_argv = mock.Mock()
+    context.runner.get_nose_argv.return_value = ['repeated', 'repeated', 'repeated']
+
+    context.runner.get_paths_for = mock.Mock()
+    context.runner.get_paths_for.return_value = []
+
+    context.runner.setup_test_environment = mock.Mock()
+    context.runner.teardown_test_environment = mock.Mock()
+
+    context.runner.setup_databases = mock.Mock()
+    context.runner.setup_databases.return_value = 'input 4 teardown databases'
+    context.runner.teardown_databases = mock.Mock()
+
+    context.runner.migrate_to_south_if_needed = mock.Mock()
+
+    nose_run.return_value = 0
+    context.runner.run_tests([], **context.options)
+
+    context.runner.get_nose_argv.assert_called_once_with(
+        covered_package_names=['app1', 'app_two'],
+    )
+    context.runner.get_paths_for.assert_called_once_with(
+        ['app1', 'app_two'],
+        appending=['tests'],
+    )
+    nose_run.assert_called_once_with(argv=[
+        'repeated',
+    ])
+    context.runner.teardown_databases.assert_called_once_with(
+        'input 4 teardown databases',
+    )
+    context.runner.migrate_to_south_if_needed.assert_called_once_with()
