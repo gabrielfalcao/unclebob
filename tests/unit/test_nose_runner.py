@@ -51,6 +51,7 @@ def prepare_stuff(context):
         'is_functional': False,
         'is_integration': False,
     }
+    context.old_argv = sys.argv[:]
     sys.stdout = StringIO()
     sys.stderr = StringIO()
     context.runner.get_argv_options = lambda: context.options
@@ -60,6 +61,8 @@ def and_cleanup_the_mess(context):
     del context.runner
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
+    sys.argv = context.old_argv
+
     original_settings = get_settings(context.old_settings)
     for attr in get_settings(settings):
         if attr not in original_settings:
@@ -326,7 +329,7 @@ def test_run_tests_simple_with_labels(context, nose_run):
     context.runner.migrate_to_south_if_needed = mock.Mock()
 
     nose_run.return_value = 0
-    context.runner.run_tests(['app', 'labels'], **context.options)
+    context.runner.run_tests(['app', 'labels'])
 
     context.runner.get_nose_argv.assert_called_once_with(
         covered_package_names=['app', 'labels'],
@@ -373,7 +376,7 @@ def test_run_without_labels_gets_the_installed_apps(context, nose_run):
     context.runner.migrate_to_south_if_needed = mock.Mock()
 
     nose_run.return_value = 0
-    context.runner.run_tests([], **context.options)
+    context.runner.run_tests([])
 
     context.runner.get_nose_argv.assert_called_once_with(
         covered_package_names=['app1', 'app_two'],
@@ -420,7 +423,7 @@ def test_when_nose_run_fails(context, nose_run):
     context.runner.migrate_to_south_if_needed = mock.Mock()
 
     nose_run.return_value = 1
-    context.runner.run_tests([], **context.options)
+    context.runner.run_tests([])
 
     context.runner.get_nose_argv.assert_called_once_with(
         covered_package_names=['app1', 'app_two'],
@@ -467,7 +470,7 @@ def test_running_unit_tests_without_app_labels(context, nose_run):
     context.runner.migrate_to_south_if_needed = mock.Mock()
 
     nose_run.return_value = 0
-    context.runner.run_tests([], **context.options)
+    context.runner.run_tests([])
 
     context.runner.get_nose_argv.assert_called_once_with(
         covered_package_names=['john', 'doe'],
@@ -528,7 +531,7 @@ def test_running_unit_n_functional_without_labels(context, nose_run):
     context.runner.migrate_to_south_if_needed = mock.Mock()
 
     nose_run.return_value = 0
-    context.runner.run_tests([], **context.options)
+    context.runner.run_tests([])
 
     context.runner.get_nose_argv.assert_called_once_with(
         covered_package_names=['john', 'doe'],
@@ -597,7 +600,7 @@ def test_running_unit_n_integration_without_labels(context, nose_run):
     context.runner.migrate_to_south_if_needed = mock.Mock()
 
     nose_run.return_value = 0
-    context.runner.run_tests([], **context.options)
+    context.runner.run_tests([])
 
     context.runner.get_nose_argv.assert_called_once_with(
         covered_package_names=['john', 'doe'],
@@ -667,7 +670,7 @@ def test_running_unit_func_n_integration_without_labels(context, nose_run):
     context.runner.migrate_to_south_if_needed = mock.Mock()
 
     nose_run.return_value = 0
-    context.runner.run_tests([], **context.options)
+    context.runner.run_tests([])
 
     context.runner.get_nose_argv.assert_called_once_with(
         covered_package_names=['john', 'doe'],
@@ -760,7 +763,11 @@ def test_nose_is_called_with_unique_args(context, nose_run):
     context.runner.get_apps.return_value = ['app1', 'app_two']
 
     context.runner.get_nose_argv = mock.Mock()
-    context.runner.get_nose_argv.return_value = ['repeated', 'repeated', 'repeated']
+    context.runner.get_nose_argv.return_value = [
+        'repeated',
+        'repeated',
+        'repeated',
+    ]
 
     context.runner.get_paths_for = mock.Mock()
     context.runner.get_paths_for.return_value = []
@@ -775,7 +782,7 @@ def test_nose_is_called_with_unique_args(context, nose_run):
     context.runner.migrate_to_south_if_needed = mock.Mock()
 
     nose_run.return_value = 0
-    context.runner.run_tests([], **context.options)
+    context.runner.run_tests([])
 
     context.runner.get_nose_argv.assert_called_once_with(
         covered_package_names=['app1', 'app_two'],
@@ -791,3 +798,90 @@ def test_nose_is_called_with_unique_args(context, nose_run):
         'input 4 teardown databases',
     )
     context.runner.migrate_to_south_if_needed.assert_called_once_with()
+
+
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_get_argv_options_simple(context):
+    u"Nose should parse sys.argv"
+    sys.argv = ['./manage.py', 'test']
+    runner = Nose()
+
+    opts = runner.get_argv_options()
+    assert that(opts['is_unit']).equals(False)
+    assert that(opts['is_functional']).equals(False)
+    assert that(opts['is_integration']).equals(False)
+
+
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_get_argv_options_unit(context):
+    u"Nose should parse sys.argv and figure out whether to run as unit"
+    sys.argv = ['./manage.py', 'test', '--unit']
+    runner = Nose()
+
+    opts = runner.get_argv_options()
+    assert that(opts['is_unit']).equals(True)
+    assert that(opts['is_functional']).equals(False)
+    assert that(opts['is_integration']).equals(False)
+
+
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_get_argv_options_functional(context):
+    u"Nose should parse sys.argv and figure out whether to run as functional"
+    sys.argv = ['./manage.py', 'test', '--functional']
+    runner = Nose()
+
+    opts = runner.get_argv_options()
+    assert that(opts['is_unit']).equals(False)
+    assert that(opts['is_functional']).equals(True)
+    assert that(opts['is_integration']).equals(False)
+
+
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_get_argv_options_integration(context):
+    u"Nose should parse sys.argv and figure out whether to run as integration"
+    sys.argv = ['./manage.py', 'test', '--integration']
+    runner = Nose()
+
+    opts = runner.get_argv_options()
+    assert that(opts['is_unit']).equals(False)
+    assert that(opts['is_functional']).equals(False)
+    assert that(opts['is_integration']).equals(True)
+
+
+@mock.patch.object(management, 'get_commands')
+@mock.patch.object(management, 'load_command_class')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_should_try_loading_test_cmd_class(context,
+                                           load_command_class,
+                                           get_commands):
+    u"Nose should try loading the 'test' command class"
+    sys.argv = ['./manage.py', 'test',
+                '--unit', '--functional', '--integration']
+    runner = Nose()
+
+    command_mock = mock.Mock()
+    get_commands.return_value = {'test': 'string to load'}
+    load_command_class.return_value = command_mock
+    command_mock.option_list = []
+
+    opts = runner.get_argv_options()
+    assert that(opts['is_unit']).equals(True)
+    assert that(opts['is_functional']).equals(True)
+    assert that(opts['is_integration']).equals(True)
+
+    get_commands.assert_called_once_with()
+    load_command_class.assert_called_once_with('string to load', 'test')
+
+
+@mock.patch.object(imp, 'find_module')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_should_ignore_packages_that_are_not_packages(context, find_module):
+    u"Nose.get_nose_argv support extending base args thru settings"
+
+    find_module.side_effect = ImportError('no module called some_module')
+
+    assert that(context.runner.get_nose_argv()).equals([
+        'nosetests', '-s', '--verbosity=1', '--exe',
+        '--nologcapture',
+        '--cover-inclusive', '--cover-erase',
+    ])

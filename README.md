@@ -1,5 +1,5 @@
 # unclebob
-> Version 0.2
+> Version 0.3
 
 # What
 
@@ -25,7 +25,7 @@ on settings.py
         ...
     )
 
-    TEST_RUNNER = 'unclebob.NoseTestRunner'
+    TEST_RUNNER = 'unclebob.runners.Nose
 
 # running
 
@@ -86,5 +86,3 @@ This project is a tribute to
 [Uncle Bob Martin](http://en.wikipedia.org/wiki/Robert_Cecil_Martin),
 one of the [agile manifesto](http://agilemanifesto.org/) chaps that
 brought code cleaness techniques and advices to us.
-
-

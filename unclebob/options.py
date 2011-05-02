@@ -30,7 +30,7 @@ def add_option(kind):
     msg = 'Look for {0} tests on appname/tests/{0}/*test*.py'
     return make_option(
         '--%s' % kind, action='store_true',
-        dest='is_%s' % kind, default=True,
+        dest='is_%s' % kind, default=False,
         help=msg.format(kind))
 
 basic = [
