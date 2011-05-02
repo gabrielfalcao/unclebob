@@ -127,7 +127,7 @@ class Nose(DjangoTestSuiteRunner):
             if os_path.exists(path):
                 paths.append(path)
 
-        return paths
+        return list(set(paths))
 
     def migrate_to_south_if_needed(self):
         should_migrate = getattr(settings, 'SOUTH_TESTS_MIGRATE', False)

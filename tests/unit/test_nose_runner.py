@@ -715,3 +715,30 @@ def test_get_paths_for_accept_paths_as_parameter_checking_if_exists(
 
     find_module.assert_called_once_with('/path/to/file.py')
     assert that(load_module.call_count).equals(0)
+
+
+@mock.patch.object(os.path, 'exists')
+@mock.patch.object(imp, 'load_module')
+@mock.patch.object(imp, 'find_module')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_get_paths_for_never_return_duplicates(
+    context,
+    find_module,
+    load_module,
+    exists):
+    u"get_paths_for never return duplicates"
+
+    module_mock = mock.Mock()
+    module_mock.__file__ = '/path/to/file.py'
+
+    find_module.return_value = ('file', 'pathname', 'description')
+    load_module.return_value = module_mock
+
+    exists.return_value = True
+
+    expected_paths = context.runner.get_paths_for(
+        ['/path/to/file.py', '/path/to/file.py'],
+        appending=['more', 'members'],
+    )
+
+    assert that(expected_paths).equals(['/path/to/more/members'])
