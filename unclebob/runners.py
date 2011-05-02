@@ -176,6 +176,7 @@ class Nose(DjangoTestSuiteRunner):
             self.migrate_to_south_if_needed()
             self.verbosity = old_verbosity
 
+        print "Uncle Bob will run the tests now..."
         passed = nose.run(argv=nose_argv)
 
         if not_unitary:
