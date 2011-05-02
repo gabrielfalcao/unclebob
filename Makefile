@@ -1,6 +1,6 @@
 all: check_dependencies unit functional integration
 
-filename=unclebob-`python -c 'import unclebob;print unclebob.version'`.tar.gz
+filename=unclebob-`python -c 'import unclebob.version;print unclebob.version.version'`.tar.gz
 
 export UNCLEBOB_DEPENDENCIES:= nose django south sure
 export DJANGO_SETTINGS_MODULE:= djangounclebob.settings
