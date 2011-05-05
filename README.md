@@ -26,6 +26,8 @@ on settings.py
     )
 
     TEST_RUNNER = 'unclebob.runners.Nose
+    import unclebob
+    unclebob.take_care_of_my_tests()
 
 # running
 
