@@ -43,7 +43,7 @@ def get_settings(obj):
     return dict(map(attrtuple, filter(normalattrs, dir(obj))))
 
 
-def prepare_stuff(context):
+def prepare_stuff(context, *args, **kw):
     context.runner = Nose()
     context.old_settings = get_settings(settings)
     context.options = {
@@ -57,7 +57,7 @@ def prepare_stuff(context):
     context.runner.get_argv_options = lambda: context.options
 
 
-def and_cleanup_the_mess(context):
+def and_cleanup_the_mess(context, *args, **kw):
     del context.runner
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
