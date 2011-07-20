@@ -26,6 +26,8 @@
 
 import imp
 import nose
+import traceback
+
 from os import path as os_path
 from os.path import dirname, join
 from optparse import OptionParser
@@ -196,8 +198,11 @@ class Nose(DjangoTestSuiteRunner):
         passed = nose.run(argv=unique(nose_argv))
 
         if not_unitary:
-            self.teardown_databases(old_config)
-            self.teardown_test_environment()
+            try:
+                self.teardown_databases(old_config)
+                self.teardown_test_environment()
+            except Exception, e:
+                traceback.print_exc(e)
 
         if passed:
             return 0
