@@ -3,3 +3,4 @@ south
 nose
 sure
 mock
+coverage
