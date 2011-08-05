@@ -182,7 +182,15 @@ class Nose(DjangoTestSuiteRunner):
 
         nose_argv.extend(apps)
 
-        if not_unitary:
+        eligible_for_test_db = not getattr(
+            settings, 'UNCLEBOB_NO_DATABASE', False)
+
+        if eligible_for_test_db and not_unitary:
+            # eligible_for_test_db means the user did not set the
+            # settings.UNCLEBOB_NO_DATABASE = True
+
+            # and
+
             # not unitary means that should create a test database and
             # migrate if needed (support only south now)
             old_verbosity = self.verbosity
@@ -197,7 +205,7 @@ class Nose(DjangoTestSuiteRunner):
 
         passed = nose.run(argv=unique(nose_argv))
 
-        if not_unitary:
+        if eligible_for_test_db and not_unitary:
             try:
                 self.teardown_databases(old_config)
                 self.teardown_test_environment()

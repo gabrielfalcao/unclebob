@@ -70,6 +70,15 @@ For that reason, sir, Uncle Bob is gonna break your neck in case you
 decide to use those, so called, "external resources" in your unit
 tests.
 
+# although you can tell unclebob to never touch the database at all
+
+in your `settings.py`
+
+```python
+UNCLEBOB_NO_DATABASE = True
+```
+
+
 # Motivation
 
 [nose](http://code.google.com/p/python-nose/) is such a really nice

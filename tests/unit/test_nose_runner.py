@@ -885,3 +885,109 @@ def test_should_ignore_packages_that_are_not_packages(context, find_module):
         '--nologcapture',
         '--cover-inclusive', '--cover-erase',
     ])
+
+
+@mock.patch.object(nose, 'run')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_setting_NO_DATABASE_has_priority_functional(context, nose_run):
+    u"it should respect when user doesn't want a test db, even for functional"
+
+    settings.UNCLEBOB_NO_DATABASE = True
+    context.options['is_functional'] = True
+
+    context.runner.get_apps = mock.Mock()
+    context.runner.get_apps.return_value = ['john', 'doe']
+
+    context.runner.get_nose_argv = mock.Mock()
+    context.runner.get_nose_argv.return_value = ['nose', 'argv']
+
+    context.runner.get_paths_for = mock.Mock()
+    context.runner.get_paths_for.return_value = [
+        '/apps/john/tests/unit',
+        '/apps/doe/tests/unit',
+    ]
+
+    context.runner.setup_test_environment = mock.Mock()
+    context.runner.teardown_test_environment = mock.Mock()
+
+    context.runner.setup_databases = mock.Mock()
+    context.runner.teardown_databases = mock.Mock()
+    context.runner.migrate_to_south_if_needed = mock.Mock()
+
+    nose_run.return_value = 0
+    context.runner.run_tests([])
+
+    context.runner.get_nose_argv.assert_called_once_with(
+        covered_package_names=['john', 'doe'],
+    )
+    context.runner.get_paths_for.assert_called_once_with(
+        ['john', 'doe'],
+        appending=['tests', 'functional'],
+    )
+    nose_run.assert_called_once_with(argv=[
+        'nose', 'argv',
+        '/apps/john/tests/unit',
+        '/apps/doe/tests/unit',
+    ])
+
+    assert context.runner.setup_databases.call_count == 0, \
+        "setup_databases was called when it shouldn't"
+
+    assert context.runner.teardown_databases.call_count == 0, \
+        "teardown_databases was called when it shouldn't"
+
+    assert context.runner.migrate_to_south_if_needed.call_count == 0, \
+        "migrate_to_south_if_needed was called when it shouldn't"
+
+
+@mock.patch.object(nose, 'run')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_setting_NO_DATABASE_has_priority_integration(context, nose_run):
+    u"it should respect when user doesn't want a test db, even for integration"
+
+    settings.UNCLEBOB_NO_DATABASE = True
+    context.options['is_integration'] = True
+
+    context.runner.get_apps = mock.Mock()
+    context.runner.get_apps.return_value = ['john', 'doe']
+
+    context.runner.get_nose_argv = mock.Mock()
+    context.runner.get_nose_argv.return_value = ['nose', 'argv']
+
+    context.runner.get_paths_for = mock.Mock()
+    context.runner.get_paths_for.return_value = [
+        '/apps/john/tests/unit',
+        '/apps/doe/tests/unit',
+    ]
+
+    context.runner.setup_test_environment = mock.Mock()
+    context.runner.teardown_test_environment = mock.Mock()
+
+    context.runner.setup_databases = mock.Mock()
+    context.runner.teardown_databases = mock.Mock()
+    context.runner.migrate_to_south_if_needed = mock.Mock()
+
+    nose_run.return_value = 0
+    context.runner.run_tests([])
+
+    context.runner.get_nose_argv.assert_called_once_with(
+        covered_package_names=['john', 'doe'],
+    )
+    context.runner.get_paths_for.assert_called_once_with(
+        ['john', 'doe'],
+        appending=['tests', 'integration'],
+    )
+    nose_run.assert_called_once_with(argv=[
+        'nose', 'argv',
+        '/apps/john/tests/unit',
+        '/apps/doe/tests/unit',
+    ])
+
+    assert context.runner.setup_databases.call_count == 0, \
+        "setup_databases was called when it shouldn't"
+
+    assert context.runner.teardown_databases.call_count == 0, \
+        "teardown_databases was called when it shouldn't"
+
+    assert context.runner.migrate_to_south_if_needed.call_count == 0, \
+        "migrate_to_south_if_needed was called when it shouldn't"
