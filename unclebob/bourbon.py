@@ -38,7 +38,7 @@ def taste():
             if tester is None:
                 return res
             if isinstance(tester, basestring):
-                tester = management.load_command_class(tester, 'test')
+                tester = management.load_command_class('django.core', 'test')
 
             new_options = basic[:]
 

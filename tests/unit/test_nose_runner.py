@@ -870,7 +870,7 @@ def test_should_try_loading_test_cmd_class(context,
     assert that(opts['is_integration']).equals(True)
 
     get_commands.assert_called_once_with()
-    load_command_class.assert_called_once_with('string to load', 'test')
+    load_command_class.assert_called_once_with('django.core', 'test')
 
 
 @mock.patch.object(imp, 'find_module')

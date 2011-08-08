@@ -64,7 +64,7 @@ class Nose(DjangoTestSuiteRunner):
         command = management.get_commands()['test']
 
         if isinstance(command, basestring):
-            command = management.load_command_class(command, 'test')
+            command = management.load_command_class('django.core', 'test')
 
         for opt in command.option_list:
             if opt.get_opt_string() not in (
