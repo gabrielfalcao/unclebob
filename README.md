@@ -19,15 +19,17 @@ UncleBob is a simple django app that allow you writting per-app tests within the
 
 on settings.py
 
-    INSTALLED_APPS = (
-        ...
-        'unclebob',
-        ...
-    )
+```python
+INSTALLED_APPS = (
+    ...
+    'unclebob',
+    ...
+)
 
-    TEST_RUNNER = 'unclebob.runners.Nose
-    import unclebob
-    unclebob.take_care_of_my_tests()
+TEST_RUNNER = 'unclebob.runners.Nose
+import unclebob
+unclebob.take_care_of_my_tests()
+```
 
 # running
 
@@ -78,6 +80,15 @@ in your `settings.py`
 UNCLEBOB_NO_DATABASE = True
 ```
 
+# other aspects
+
+## 1. it provides an environment variable, so that you'll know when unclebob is running
+
+When unclebob is running tests, it sets the environment variable
+ `UNCLEBOB_RUNNING` to the current working directory.
+
+You can use it, for example, in your codebase fr avoiding logging
+during the tests.
 
 # Motivation
 
@@ -93,7 +104,6 @@ much tests, better.
 
 # Naming
 
-This project is a tribute to
-[Uncle Bob Martin](http://en.wikipedia.org/wiki/Robert_Cecil_Martin),
+This project was named after [Uncle Bob Martin](http://en.wikipedia.org/wiki/Robert_Cecil_Martin),
 one of the [agile manifesto](http://agilemanifesto.org/) chaps that
-brought code cleaness techniques and advices to us.
+brought code cleaness techniques and advices to the rest of us.

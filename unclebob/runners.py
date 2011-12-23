@@ -23,7 +23,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
-
+import os
 import imp
 import nose
 import traceback
@@ -155,6 +155,7 @@ class Nose(DjangoTestSuiteRunner):
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
         # Pretend it's a production environment.
         settings.DEBUG = False
+        os.environ['UNCLEBOB_RUNNING'] = os.getcwdu()
 
         app_names = test_labels or self.get_apps()
         nose_argv = self.get_nose_argv(covered_package_names=app_names)
