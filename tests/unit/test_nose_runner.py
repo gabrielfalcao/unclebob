@@ -141,7 +141,33 @@ def test_should_allow_extending_covered_packages(context, find_module):
         (('otherapp',), {}),
     ])
 
-    find_module.assert_called_with('otherapp')
+
+@mock.patch.object(imp, 'find_module')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_get_nose_argv_when_imp_raises(context, find_module):
+    u"Nose.get_nose_argv ignores given package names that raise ImportError"
+
+    def raise_importerror_if_one_app(package):
+        if package == 'one_app':
+            raise ImportError('oooops')
+
+    find_module.side_effect = raise_importerror_if_one_app
+
+    arguments = context.runner.get_nose_argv(covered_package_names=[
+        'one_app',
+        'otherapp',
+    ])
+
+    assert that(arguments).equals([
+        'nosetests', '-s', '--verbosity=1', '--exe',
+        '--nologcapture',
+        '--cover-inclusive', '--cover-erase',
+        '--cover-package="otherapp"',
+    ])
+    assert that(find_module.call_args_list).equals([
+        (('one_app',), {}),
+        (('otherapp',), {}),
+    ])
 
 
 @that_with_context(prepare_stuff, and_cleanup_the_mess)

@@ -206,11 +206,8 @@ class Nose(DjangoTestSuiteRunner):
         passed = nose.run(argv=unique(nose_argv))
 
         if eligible_for_test_db and not_unitary:
-            try:
-                self.teardown_databases(old_config)
-                self.teardown_test_environment()
-            except Exception, e:
-                traceback.print_exc(e)
+            self.teardown_databases(old_config)
+            self.teardown_test_environment()
 
         if passed:
             return 0
