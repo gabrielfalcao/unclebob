@@ -1,5 +1,6 @@
+# #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# <unclebob - django tool for running tests organized between unit, functional and integration>
+# <unclebob - django tool for running unit, functional and integration tests>
 # Copyright (C) <2011>  Gabriel Falcão <gabriel@nacaolivre.org>
 #
 # Permission is hereby granted, free of charge, to any person
@@ -22,4 +23,5 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
-version = '0.3.3'
+
+version = '0.3.4'

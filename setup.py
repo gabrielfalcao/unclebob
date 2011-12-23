@@ -38,7 +38,7 @@ def get_packages():
     return packages
 
 setup(name='unclebob',
-    version='0.3.3',
+    version='0.3.4',
     description='Django testing tool set',
     author=u'Gabriel Falcao',
     author_email='gabriel@nacaolivre.org',
