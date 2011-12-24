@@ -90,7 +90,7 @@ class Nose(DjangoTestSuiteRunner):
             'nosetests', '-s',
             '--verbosity=%d' % int(self.verbosity),
             '--exe',
-            '--nologcapture',
+            '--logging-clear-handlers',
             '--cover-inclusive',
             '--cover-erase',
         ]

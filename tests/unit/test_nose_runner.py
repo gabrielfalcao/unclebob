@@ -99,7 +99,7 @@ def test_should_have_a_base_nose_argv(context):
 
     assert that(context.runner.get_nose_argv()).equals([
         'nosetests', '-s', '--verbosity=1', '--exe',
-        '--nologcapture',
+        '--logging-clear-handlers',
         '--cover-inclusive', '--cover-erase',
     ])
 
@@ -113,7 +113,7 @@ def test_should_allow_extending_base_argv_thru_settings(context):
     ]
     assert that(context.runner.get_nose_argv()).equals([
         'nosetests', '-s', '--verbosity=1', '--exe',
-        '--nologcapture',
+        '--logging-clear-handlers',
         '--cover-inclusive', '--cover-erase',
         '--cover-package="some_module"',
     ])
@@ -131,7 +131,7 @@ def test_should_allow_extending_covered_packages(context, find_module):
 
     assert that(arguments).equals([
         'nosetests', '-s', '--verbosity=1', '--exe',
-        '--nologcapture',
+        '--logging-clear-handlers',
         '--cover-inclusive', '--cover-erase',
         '--cover-package="one_app"',
         '--cover-package="otherapp"',
@@ -160,7 +160,7 @@ def test_get_nose_argv_when_imp_raises(context, find_module):
 
     assert that(arguments).equals([
         'nosetests', '-s', '--verbosity=1', '--exe',
-        '--nologcapture',
+        '--logging-clear-handlers',
         '--cover-inclusive', '--cover-erase',
         '--cover-package="otherapp"',
     ])
@@ -908,7 +908,7 @@ def test_should_ignore_packages_that_are_not_packages(context, find_module):
 
     assert that(context.runner.get_nose_argv()).equals([
         'nosetests', '-s', '--verbosity=1', '--exe',
-        '--nologcapture',
+        '--logging-clear-handlers',
         '--cover-inclusive', '--cover-erase',
     ])
 
