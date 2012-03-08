@@ -1,7 +1,7 @@
 # #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # <unclebob - django tool for running tests organized between unit, functional and integration>
-# Copyright (C) <2011>  Gabriel Falcão <gabriel@nacaolivre.org>
+# Copyright (C) <2011-2012>  Gabriel Falcão <gabriel@nacaolivre.org>
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
@@ -38,7 +38,7 @@ def get_packages():
     return packages
 
 setup(name='unclebob',
-    version='0.3.5',
+    version='0.3.6',
     description='Django testing tool set',
     author=u'Gabriel Falcao',
     author_email='gabriel@nacaolivre.org',
