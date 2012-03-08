@@ -28,7 +28,7 @@ from unclebob.options import basic
 from django.core import management
 
 
-def taste():
+def patch():
     "monkey patches the django test command"
     def patch_get_commands(get_commands):
         @wraps(get_commands)

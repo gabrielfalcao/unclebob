@@ -26,7 +26,6 @@
 import os
 import imp
 import nose
-import traceback
 
 from os import path as os_path
 from os.path import dirname, join
@@ -152,6 +151,12 @@ class Nose(DjangoTestSuiteRunner):
             print "Uncle Bob is running the database migrations..."
             management.call_command('migrate')
 
+    def sip_some_bourbon(self):
+        try:
+            import bourbon
+        except Exception:
+            pass
+
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
         # Pretend it's a production environment.
         settings.DEBUG = False
@@ -204,6 +209,7 @@ class Nose(DjangoTestSuiteRunner):
 
         print "Uncle Bob will run the tests now..."
 
+        self.sip_some_bourbon()  # loading the "bourbon.py" file
         passed = nose.run(argv=unique(nose_argv))
 
         if eligible_for_test_db and not_unitary:

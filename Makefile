@@ -14,17 +14,17 @@ check_dependencies:
 
 unit: clean
 	@echo "Running unit tests ..."
-	@python manage.py test --unit
+	@python manage.py test --unit -v2
 	@nosetests -s --verbosity=2 --with-coverage --cover-inclusive tests/unit --cover-package=unclebob
 
 functional: clean
 	@echo "Running functional tests ..."
-	@python manage.py test --functional
+	@python manage.py test --functional -v2
 	@nosetests -s --verbosity=2 --cover-erase tests/functional
 
 integration: clean
 	@echo "Running integration tests ..."
-	@python manage.py test --integration
+	@python manage.py test --integration -v2
 	@nosetests -s --verbosity=2 --cover-erase tests/integration
 
 clean:

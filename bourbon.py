@@ -1,7 +1,7 @@
 # #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# <unclebob - django tool for running unit, functional and integration tests>
-# Copyright (C) <2011>  Gabriel Falcão <gabriel@nacaolivre.org>
+# <unclebob - django tool for running tests organized between unit, functional and integration>
+# Copyright (C) <2011-2012>  Gabriel Falcão <gabriel@nacaolivre.org>
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
@@ -24,7 +24,5 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-
-def take_care_of_my_tests():
-    from unclebob import monkey
-    monkey.patch()
+from django.conf import settings
+settings.BOURBON_LOADED_TIMES += 1

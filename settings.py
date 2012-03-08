@@ -74,3 +74,5 @@ INSTALLED_APPS = (
 )
 TEST_RUNNER = 'unclebob.runners.Nose'
 unclebob.take_care_of_my_tests()
+
+BOURBON_LOADED_TIMES = 0
