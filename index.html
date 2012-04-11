@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Unclebob : django tool for running tests organized between unit, functional and integration" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Unclebob</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/gabrielfalcao/unclebob">Fork Me on GitHub</a>
+
+          <h1 id="project_title">Unclebob</h1>
+          <h2 id="project_tagline">django tool for running tests organized between unit, functional and integration</h2>
+
+          <section id="downloads">
+            <a class="zip_download_link" href="https://github.com/gabrielfalcao/unclebob/zipball/master">Download this project as a .zip file</a>
+            <a class="tar_download_link" href="https://github.com/gabrielfalcao/unclebob/tarball/master">Download this project as a tar.gz file</a>
+          </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>unclebob</h1>
+
+<blockquote>
+<p>Version 0.3.6</p>
+</blockquote>
+
+<h1>What</h1>
+
+<p>UncleBob is a simple django app that allow you writting per-app tests within these paths:</p>
+
+<ul>
+<li>
+<code>&lt;appname&gt;/tests/unit/test*.py</code> - for unit tests</li>
+<li>
+<code>&lt;appname&gt;/tests/functional/test*.py</code> - for functional tests</li>
+<li>
+<code>&lt;appname&gt;/tests/integration/test*.py</code> - for integration tests</li>
+</ul><h1>installing</h1>
+
+<h2>first of all</h2>
+
+<pre><code>pip install unclebob
+</code></pre>
+
+<h2>add it to your django project</h2>
+
+<p>on settings.py</p>
+
+<div class="highlight">
+<pre><span class="n">INSTALLED_APPS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="o">...</span>
+    <span class="s">'unclebob'</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+
+<span class="n">TEST_RUNNER</span> <span class="o">=</span> <span class="s">'unclebob.runners.Nose</span>
+<span class="kn">import</span> <span class="nn">unclebob</span>
+<span class="n">unclebob</span><span class="o">.</span><span class="n">take_care_of_my_tests</span><span class="p">()</span>
+</pre>
+</div>
+
+
+<h1>running</h1>
+
+<p>just use the regular <strong>test</strong> command:</p>
+
+<pre><code>python manage.py test
+</code></pre>
+
+<h2>running only the unit tests</h2>
+
+<pre><code>python manage.py test --unit
+</code></pre>
+
+<h2>running only the functional tests</h2>
+
+<pre><code>python manage.py test --functional
+</code></pre>
+
+<h2>running only the integration tests</h2>
+
+<pre><code>python manage.py test --integration
+</code></pre>
+
+<h2>running only a specific path</h2>
+
+<pre><code>python manage.py test path/to/app/tests
+</code></pre>
+
+<p>or</p>
+
+<pre><code>python manage.py test path/to/app/tests/unit
+</code></pre>
+
+<h1>warning:</h1>
+
+<p>if you run only the <code>unit</code> tests, then unclebob is NOT going to setup
+the test database. Since
+<a href="http://en.wikipedia.org/wiki/Unit_testing">unit tests</a> are supposed
+to be "unwired", what I mean is that unit tests MUST NOT make use of
+actual database, filesystem or network at all.</p>
+
+<p>Instead, they must test isolated parts of your code.</p>
+
+<p>For that reason, sir, Uncle Bob is gonna break your neck in case you
+decide to use those, so called, "external resources" in your unit
+tests.</p>
+
+<h1>although you can tell unclebob to never touch the database at all</h1>
+
+<p>in your <code>settings.py</code></p>
+
+<div class="highlight">
+<pre><span class="n">UNCLEBOB_NO_DATABASE</span> <span class="o">=</span> <span class="bp">True</span>
+</pre>
+</div>
+
+
+<h1>other aspects</h1>
+
+<h2>1. it provides an environment variable, so that you'll know when unclebob is running</h2>
+
+<p>When unclebob is running tests, it sets the environment variable
+ <code>UNCLEBOB_RUNNING</code> to the current working directory.</p>
+
+<p>You can use it, for example, in your codebase fr avoiding logging
+during the tests.</p>
+
+<h1>Motivation</h1>
+
+<p><a href="http://code.google.com/p/python-nose/">nose</a> is such a really nice
+tool for writting tests on python.</p>
+
+<p>Instead of using the unittest framework, which is builtin python thou
+is less fun to use.</p>
+
+<p>And you know, the most joyable is the writting/running test
+experience, more developers will write tests for the project. And as
+much tests, better.</p>
+
+<h1>Naming</h1>
+
+<p>This project was named after <a href="http://en.wikipedia.org/wiki/Robert_Cecil_Martin">Uncle Bob Martin</a>,
+one of the <a href="http://agilemanifesto.org/">agile manifesto</a> chaps that
+brought code cleaness techniques and advices to the rest of us.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Unclebob maintained by <a href="https://github.com/gabrielfalcao">gabrielfalcao</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
