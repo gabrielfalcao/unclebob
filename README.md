@@ -26,7 +26,7 @@ INSTALLED_APPS = (
     ...
 )
 
-TEST_RUNNER = 'unclebob.runners.Nose
+TEST_RUNNER = 'unclebob.runners.Nose'
 import unclebob
 unclebob.take_care_of_my_tests()
 ```
