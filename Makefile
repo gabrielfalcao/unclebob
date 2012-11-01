@@ -35,5 +35,5 @@ clean:
 release: clean unit functional integration
 	@make clean
 	@printf "Exporting to $(filename)... "
-	@tar czf $(filename) unclebob setup.py README.md
+	@python setup.py sdist register upload
 	@echo "DONE!"
