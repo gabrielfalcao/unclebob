@@ -26,7 +26,16 @@
 
 import sys
 from optparse import make_option
+from django.conf import settings
 from django.core.management.commands import test
+from django.core.management import call_command
+
+
+try:
+    from south.management.commands import patch_for_test_db_setup
+    USE_SOUTH = getattr(settings, "SOUTH_TESTS_MIGRATE", True)
+except:
+    USE_SOUTH = False
 
 
 def add_option(kind):
@@ -48,15 +57,21 @@ class Command(test.Command):
         from django.conf import settings
         from django.test.utils import get_runner
 
-        TestRunner = get_runner(settings)
         verbosity = int(options.get('verbosity', 1))
         interactive = options.get('interactive', True)
         failfast = options.get('failfast', False)
+
         TestRunner = get_runner(settings)
 
-        test_runner = TestRunner(verbosity=verbosity,
-                                 interactive=interactive,
-                                 failfast=failfast)
+        if USE_SOUTH:
+            patch_for_test_db_setup()
+            call_command('migrate', interactive=False, verbosity=0)
+
+        test_runner = TestRunner(
+            verbosity=verbosity,
+            interactive=interactive,
+            failfast=failfast,
+        )
 
         failures = test_runner.run_tests(test_labels, **options)
         if failures:
