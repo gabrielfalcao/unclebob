@@ -69,7 +69,10 @@ def and_cleanup_the_mess(context, *args, **kw):
             delattr(settings, attr)
 
     for attr, value in original_settings.items():
-        setattr(settings, attr, value)
+        try:
+            setattr(settings, attr, value)
+        except AttributeError:
+            pass
 
 
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
@@ -129,16 +132,17 @@ def test_should_allow_extending_covered_packages(context, find_module):
         'otherapp',
     ])
 
-    assert that(arguments).equals([
+    arguments.should.equal([
         'nosetests', '-s', '--verbosity=1', '--exe',
         '--logging-clear-handlers',
         '--cover-inclusive', '--cover-erase',
         '--cover-package="one_app"',
         '--cover-package="otherapp"',
     ])
-    assert that(find_module.call_args_list).equals([
-        (('one_app',), {}),
-        (('otherapp',), {}),
+
+    find_module.assert_has_calls([
+        mock.call('one_app'),
+        mock.call('otherapp'),
     ])
 
 
@@ -164,9 +168,9 @@ def test_get_nose_argv_when_imp_raises(context, find_module):
         '--cover-inclusive', '--cover-erase',
         '--cover-package="otherapp"',
     ])
-    assert that(find_module.call_args_list).equals([
-        (('one_app',), {}),
-        (('otherapp',), {}),
+    find_module.assert_has_calls([
+        mock.call('one_app'),
+        mock.call('otherapp'),
     ])
 
 
@@ -184,10 +188,10 @@ def test_should_fetch_the_apps_names_thru_get_apps_method(context):
         'django.contrib.sessions',
     )
 
-    assert that(context.runner.get_apps()).equals([
+    assert that(context.runner.get_apps()).equals((
         'foo',
         'bar',
-    ])
+    ))
 
 
 @mock.patch.object(management, 'call_command')
@@ -567,9 +571,9 @@ def test_running_unit_n_functional_without_labels(context, nose_run):
 
     assert that(get_paths_for.call_count).equals(2)
 
-    assert that(get_paths_for.call_args_list).equals([
-        ((['john', 'doe'],), {'appending':['tests', 'unit']}),
-        ((['john', 'doe'],), {'appending':['tests', 'functional']}),
+    get_paths_for.assert_has_calls([
+        mock.call(['john', 'doe'], appending=['tests', 'unit']),
+        mock.call(['john', 'doe'], appending=['tests', 'functional']),
     ])
 
     nose_run.assert_called_once_with(argv=[
@@ -634,11 +638,11 @@ def test_running_unit_n_integration_without_labels(context, nose_run):
 
     get_paths_for = context.runner.get_paths_for
 
-    assert that(get_paths_for.call_count).equals(2)
+    get_paths_for.call_count.should.equal(2)
 
-    assert that(get_paths_for.call_args_list).equals([
-        ((['john', 'doe'],), {'appending':['tests', 'unit']}),
-        ((['john', 'doe'],), {'appending':['tests', 'integration']}),
+    get_paths_for.assert_has_calls([
+        mock.call(['john', 'doe'], appending=['tests', 'unit']),
+        mock.call(['john', 'doe'], appending=['tests', 'integration']),
     ])
 
     nose_run.assert_called_once_with(argv=[
@@ -706,10 +710,10 @@ def test_running_unit_func_n_integration_without_labels(context, nose_run):
 
     assert that(get_paths_for.call_count).equals(3)
 
-    assert that(get_paths_for.call_args_list).equals([
-        ((['john', 'doe'],), {'appending':['tests', 'unit']}),
-        ((['john', 'doe'],), {'appending':['tests', 'functional']}),
-        ((['john', 'doe'],), {'appending':['tests', 'integration']}),
+    get_paths_for.assert_has_calls([
+        mock.call(['john', 'doe'], appending=['tests', 'unit']),
+        mock.call(['john', 'doe'], appending=['tests', 'functional']),
+        mock.call(['john', 'doe'], appending=['tests', 'integration']),
     ])
 
     nose_run.assert_called_once_with(argv=[
