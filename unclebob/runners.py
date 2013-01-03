@@ -100,7 +100,7 @@ class Nose(DjangoTestSuiteRunner):
 
         def for_packages(package):
             try:
-                imp.find_module(package)
+                self.import_app_module(package)
                 return True
             except ImportError:
                 return False
@@ -125,8 +125,7 @@ class Nose(DjangoTestSuiteRunner):
 
         for name in appnames:
             try:
-                params = imp.find_module(name)
-                module = imp.load_module(name, *params)
+                module = self.import_app_module(name)
                 module_filename = module.__file__
                 module_path = dirname(module_filename)
             except ImportError:
@@ -144,6 +143,20 @@ class Nose(DjangoTestSuiteRunner):
                 paths.append(path)
 
         return unique(paths)
+
+    def import_app_module(self, name):
+        """
+        Given a module name like 'foo' or 'foo.bar' imports and returns the
+        module object
+        """
+        bits = name.split('.')
+        path = None
+        while bits:
+            bit = bits.pop(0)
+            params = imp.find_module(bit, path)
+            module = imp.load_module(bit, *params)
+            path = module.__path__
+        return module
 
     def migrate_to_south_if_needed(self):
         should_migrate = getattr(settings, 'SOUTH_TESTS_MIGRATE', False)

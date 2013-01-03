@@ -123,10 +123,11 @@ def test_should_allow_extending_base_argv_thru_settings(context):
     ])
 
 
-@mock.patch.object(imp, 'find_module')
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
-def test_should_allow_extending_covered_packages(context, find_module):
+def test_should_allow_extending_covered_packages(context):
     u"Nose.get_nose_argv easily support extending covered packages"
+
+    context.runner.import_app_module = mock.Mock()
 
     arguments = context.runner.get_nose_argv(covered_package_names=[
         'one_app',
@@ -141,22 +142,23 @@ def test_should_allow_extending_covered_packages(context, find_module):
         '--cover-package="otherapp"',
     ])
 
-    find_module.assert_has_calls([
+    context.runner.import_app_module.call_count.should.equal(2)
+    context.runner.import_app_module.assert_has_calls([
         mock.call('one_app'),
         mock.call('otherapp'),
     ])
 
 
-@mock.patch.object(imp, 'find_module')
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
-def test_get_nose_argv_when_imp_raises(context, find_module):
+def test_get_nose_argv_when_app_cannot_be_imported(context):
     u"Nose.get_nose_argv ignores given package names that raise ImportError"
 
     def raise_importerror_if_one_app(package):
         if package == 'one_app':
             raise ImportError('oooops')
 
-    find_module.side_effect = raise_importerror_if_one_app
+    context.runner.import_app_module = mock.Mock()
+    context.runner.import_app_module.side_effect = raise_importerror_if_one_app
 
     arguments = context.runner.get_nose_argv(covered_package_names=[
         'one_app',
@@ -169,7 +171,8 @@ def test_get_nose_argv_when_imp_raises(context, find_module):
         '--cover-inclusive', '--cover-erase',
         '--cover-package="otherapp"',
     ])
-    find_module.assert_has_calls([
+    context.runner.import_app_module.call_count.should.equal(2)
+    context.runner.import_app_module.assert_has_calls([
         mock.call('one_app'),
         mock.call('otherapp'),
     ])
@@ -254,45 +257,123 @@ def test_doesnt_migrate_without_south_tests_migrate(context, call_command):
     context.runner.migrate_to_south_if_needed()
 
 
-@mock.patch.object(os.path, 'exists')
 @mock.patch.object(imp, 'load_module')
 @mock.patch.object(imp, 'find_module')
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_import_app_module_imports_and_returns_the_module(context,
+                                                          find_module,
+                                                          load_module):
+    u"import_app_module returns the imported module"
+
+    module_mock = mock.Mock()
+    module_mock.__path__ = ['/path/to']
+
+    find_module.return_value = ('file', 'pathname', 'description')
+    load_module.return_value = module_mock
+
+    expected_module = context.runner.import_app_module('bazfoobar')
+
+    assert that(expected_module).equals(module_mock)
+
+    find_module.assert_called_once_with('bazfoobar', None)
+    load_module.assert_called_once_with(
+        'bazfoobar', 'file', 'pathname', 'description',
+    )
+
+
+@mock.patch.object(imp, 'load_module')
+@mock.patch.object(imp, 'find_module')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_import_app_module_imports_module_with_dots(context,
+                                                    find_module,
+                                                    load_module):
+   u"import_app_module imports module with dots"
+
+   module_baz = mock.Mock()
+   module_foo = mock.Mock()
+   module_bar = mock.Mock()
+   module_baz.__path__ = ['/path/to/baz']
+   module_foo.__path__ = ['/path/to/baz/foo']
+   module_bar.__path__ = ['/path/to/baz/foo/bar']
+
+   load_module_return_values = [
+       module_baz,
+       module_foo,
+       module_bar,
+   ]
+
+   find_module.return_value = ('file', 'pathname', 'description')
+   load_module.side_effect = lambda *args: load_module_return_values.pop(0)
+
+   expected_module = context.runner.import_app_module('baz.foo.bar')
+
+   assert that(expected_module).equals(module_bar)
+
+   find_module.call_count.should.equal(3)
+   find_module.assert_has_calls([
+       mock.call('baz', None),
+       mock.call('foo', ['/path/to/baz']),
+       mock.call('bar', ['/path/to/baz/foo'])
+   ])
+
+   load_module.call_count.should.equal(3)
+   load_module.assert_has_calls([
+       mock.call('baz', 'file', 'pathname', 'description'),
+       mock.call('foo', 'file', 'pathname', 'description'),
+       mock.call('bar', 'file', 'pathname', 'description')
+   ])
+
+
+@mock.patch.object(imp, 'load_module')
+@mock.patch.object(imp, 'find_module')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
+def test_import_app_module_raises_ImportError_if_find_module_fails(
+    context,
+    find_module,
+    load_module):
+    u"import_app_module raises ImportError if find module fails"
+
+    find_module.side_effect = ImportError('no module named /some/path')
+
+    nose.tools.assert_raises(
+        ImportError,
+        context.runner.import_app_module,
+        'bazfoobar'
+    )
+
+    find_module.assert_called_once_with('bazfoobar', None)
+    load_module.call_count.should.equals(0)
+
+
+@mock.patch.object(os.path, 'exists')
+@that_with_context(prepare_stuff, and_cleanup_the_mess)
 def test_get_paths_for_imports_the_module_and_returns_its_path(context,
-                                                               find_module,
-                                                               load_module,
                                                                exists):
     u"get_paths_for retrieves the module dirname"
 
     module_mock = mock.Mock()
     module_mock.__file__ = '/path/to/file.py'
 
-    find_module.return_value = ('file', 'pathname', 'description')
-    load_module.return_value = module_mock
+    context.runner.import_app_module = mock.Mock()
+    context.runner.import_app_module.return_value = module_mock
     exists.return_value = True
 
     expected_path = context.runner.get_paths_for(['bazfoobar'])
     assert that(expected_path).equals(['/path/to'])
 
-    find_module.assert_called_once_with('bazfoobar')
-    load_module.assert_called_once_with(
-        'bazfoobar', 'file', 'pathname', 'description',
-    )
+    context.runner.import_app_module.assert_called_once_with('bazfoobar')
 
 
 @mock.patch.object(os.path, 'exists')
-@mock.patch.object(imp, 'load_module')
-@mock.patch.object(imp, 'find_module')
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
-def test_get_paths_appends_more_paths(context, find_module, load_module,
-                                      exists):
+def test_get_paths_for_appends_more_paths(context, exists):
     u"get_paths_for retrieves the module dirname and appends stuff"
 
     module_mock = mock.Mock()
     module_mock.__file__ = '/path/to/file.py'
 
-    find_module.return_value = ('file', 'pathname', 'description')
-    load_module.return_value = module_mock
+    context.runner.import_app_module = mock.Mock()
+    context.runner.import_app_module.return_value = module_mock
     exists.return_value = True
 
     expected_path = context.runner.get_paths_for(
@@ -301,27 +382,19 @@ def test_get_paths_appends_more_paths(context, find_module, load_module,
     )
     assert that(expected_path).equals(['/path/to/one/more/place'])
 
-    find_module.assert_called_once_with('bazfoobar')
-    load_module.assert_called_once_with(
-        'bazfoobar', 'file', 'pathname', 'description',
-    )
+    context.runner.import_app_module.assert_called_once_with('bazfoobar')
 
 
 @mock.patch.object(os.path, 'exists')
-@mock.patch.object(imp, 'load_module')
-@mock.patch.object(imp, 'find_module')
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
-def test_get_paths_ignore_paths_that_doesnt_exist(context,
-                                                  find_module,
-                                                  load_module,
-                                                  exists):
+def test_get_paths_for_ignore_paths_that_doesnt_exist(context, exists):
     u"get_paths_for ignore paths that doesn't exist"
 
     module_mock = mock.Mock()
     module_mock.__file__ = '/path/to/file.py'
 
-    find_module.return_value = ('file', 'pathname', 'description')
-    load_module.return_value = module_mock
+    context.runner.import_app_module = mock.Mock()
+    context.runner.import_app_module.return_value = module_mock
     exists.return_value = False
 
     expected_path = context.runner.get_paths_for(
@@ -330,10 +403,7 @@ def test_get_paths_ignore_paths_that_doesnt_exist(context,
     )
     assert that(expected_path).equals([])
 
-    find_module.assert_called_once_with('bazfoobar')
-    load_module.assert_called_once_with(
-        'bazfoobar', 'file', 'pathname', 'description',
-    )
+    context.runner.import_app_module.assert_called_once_with('bazfoobar')
 
 
 @mock.patch.object(nose, 'run')
@@ -733,17 +803,13 @@ def test_running_unit_func_n_integration_without_labels(context, nose_run):
 
 
 @mock.patch.object(os.path, 'exists')
-@mock.patch.object(imp, 'load_module')
-@mock.patch.object(imp, 'find_module')
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
-def test_get_paths_for_accept_paths_as_parameter_checking_if_exists(
-    context,
-    find_module,
-    load_module,
-    exists):
+def test_get_paths_for_accept_paths_as_parameter_checking_if_exists(context,
+                                                                    exists):
     u"get_paths_for also takes paths, and check if exists"
 
-    find_module.side_effect = ImportError('no module named /some/path')
+    context.runner.import_app_module = mock.Mock()
+    context.runner.import_app_module.side_effect = ImportError('no module named /some/path')
 
     exists.side_effect = lambda x: x == '/path/to/file.py'
 
@@ -754,27 +820,20 @@ def test_get_paths_for_accept_paths_as_parameter_checking_if_exists(
 
     assert that(expected_paths).equals(['/path/to/file.py'])
 
-    find_module.assert_called_once_with('/path/to/file.py')
-    assert that(load_module.call_count).equals(0)
+    context.runner.import_app_module.assert_called_once_with('/path/to/file.py')
 
 
 @mock.patch.object(os.path, 'exists')
-@mock.patch.object(imp, 'load_module')
-@mock.patch.object(imp, 'find_module')
 @that_with_context(prepare_stuff, and_cleanup_the_mess)
-def test_get_paths_for_never_return_duplicates(
-    context,
-    find_module,
-    load_module,
-    exists):
+def test_get_paths_for_never_return_duplicates(context,
+                                               exists):
     u"get_paths_for never return duplicates"
 
     module_mock = mock.Mock()
     module_mock.__file__ = '/path/to/file.py'
 
-    find_module.return_value = ('file', 'pathname', 'description')
-    load_module.return_value = module_mock
-
+    context.runner.import_app_module = mock.Mock()
+    context.runner.import_app_module.return_value = module_mock
     exists.return_value = True
 
     expected_paths = context.runner.get_paths_for(
