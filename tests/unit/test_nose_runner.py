@@ -32,7 +32,8 @@ import nose
 from StringIO import StringIO
 from django.conf import settings
 from django.core import management
-from sure import that, that_with_context
+from sure.deprecated import that
+from sure import that_with_context
 
 from unclebob.runners import Nose
 
