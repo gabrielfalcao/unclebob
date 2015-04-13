@@ -68,7 +68,7 @@ actual database, filesystem or network at all.
 
 Instead, they must test isolated parts of your code.
 
-For that reason, sir, Uncle Bob is gonna break your neck in case you
+For that reason, ma'am/sir, Uncle Bob is gonna break your neck in case you
 decide to use those, so called, "external resources" in your unit
 tests.
 
