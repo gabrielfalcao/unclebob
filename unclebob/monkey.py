@@ -26,7 +26,9 @@
 from functools import wraps
 from unclebob.options import basic
 from django.core import management
+from django.utils.importlib import import_module
 
+TEST_COMMAND_NAME = 'test'
 
 def patch():
     "monkey patches the django test command"
@@ -34,23 +36,23 @@ def patch():
         @wraps(get_commands)
         def the_patched(*args, **kw):
             res = get_commands(*args, **kw)
-            tester = res.get('test', None)
-            if tester is None:
+            test_command = res.get('test', None)
+            if test_command is None:
                 return res
-            if isinstance(tester, basestring):
-                tester = management.load_command_class('django.core', 'test')
-
             new_options = basic[:]
-
+            module_location = '{0}.management.commands.{1}'.format(
+                                            test_command, TEST_COMMAND_NAME)
+            module = import_module(module_location)
+            test_command_class = module.Command
             ignored_opts = ('--unit', '--functional', '--integration')
-            for opt in tester.option_list:
+            for opt in test_command_class.option_list:
                 if opt.get_opt_string() not in ignored_opts:
                     new_options.insert(0, opt)
 
-            tester.option_list = tuple(new_options)
-            res['test'] = tester
+            test_command_class.option_list = tuple(new_options)
             return res
 
         return the_patched
 
     management.get_commands = patch_get_commands(management.get_commands)
+
