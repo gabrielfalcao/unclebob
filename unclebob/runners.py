@@ -29,14 +29,13 @@ import nose
 
 from os import path as os_path
 from os.path import dirname, join
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 from django.conf import settings
 from django.core import management
-from django.test.simple import DjangoTestSuiteRunner
+from django.test.runner import DiscoverRunner
 
 from unclebob.options import basic
-
 
 def unique(lst):
     l = []
@@ -45,9 +44,19 @@ def unique(lst):
             l.append(item)
     return l
 
-
-class Nose(DjangoTestSuiteRunner):
+class Nose(DiscoverRunner):
     IGNORED_APPS = ['unclebob', 'south']
+
+    @classmethod
+    def add_arguments(cls, parser):
+        map(lambda a: parser.add_argument(a[0], **a[1]), basic)
+        return super(Nose, cls).add_arguments(parser)
+
+    def __init__(self, *args, **kwargs):
+        self.is_unit = kwargs['is_unit']
+        self.is_functional = kwargs['is_functional']
+        self.is_integration = kwargs['is_integration']
+        return super(Nose, self).__init__(args, kwargs)
 
     def get_setting_or_list(self, name):
         return getattr(settings, name, [])
@@ -56,31 +65,6 @@ class Nose(DjangoTestSuiteRunner):
         apps = self.IGNORED_APPS[:]
         apps.extend(self.get_setting_or_list('UNCLEBOB_IGNORED_APPS'))
         return apps
-
-    def get_argv_options(self):
-        parser = OptionParser()
-        map(parser.add_option, basic)
-        command = management.get_commands()['test']
-
-        if isinstance(command, basestring):
-            command = management.load_command_class('django.core', 'test')
-
-        for opt in command.option_list:
-            if opt.get_opt_string() not in (
-                '--unit',
-                '--functional',
-                '--integration',
-            ):
-                parser.add_option(opt)
-
-        (_options, _) = parser.parse_args()
-
-        options = dict(
-            is_unit=_options.is_unit,
-            is_functional=_options.is_functional,
-            is_integration=_options.is_integration,
-        )
-        return options
 
     def get_nose_argv(self, covered_package_names=None):
         packages_to_cover = covered_package_names or []
@@ -167,19 +151,13 @@ class Nose(DjangoTestSuiteRunner):
 
         old_config = None
 
-        options = self.get_argv_options()
-
-        is_unit = options['is_unit']
-        is_functional = options['is_functional']
-        is_integration = options['is_integration']
-
-        not_unitary = not is_unit or (is_functional or is_integration)
-        specific_kind = is_unit or is_functional or is_integration
+        not_unitary = not self.is_unit or (self.is_functional or self.is_integration)
+        specific_kind = self.is_unit or self.is_functional or self.is_integration
 
         apps = []
 
         for kind in ('unit', 'functional', 'integration'):
-            if options['is_%s' % kind] is True:
+            if getattr(self, 'is_%s' % kind) is True:
                 apps.extend(self.get_paths_for(app_names,
                                                appending=['tests', kind]))
 

@@ -8,6 +8,9 @@ from os.path import dirname, abspath, join
 LOCAL_FILE = lambda *path: join(abspath(dirname(__file__)), *path)
 sys.path.append(LOCAL_FILE('apps'))
 
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = '#(p^g%#^=7!vvjxy7(sx20%8w*f@r)64ofu1isux46zdxd2!a&'
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -68,11 +71,9 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'south',
     'foo',
     'bar',
 )
 TEST_RUNNER = 'unclebob.runners.Nose'
-unclebob.take_care_of_my_tests()
 
 BOURBON_LOADED_TIMES = 0

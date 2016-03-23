@@ -38,7 +38,7 @@ except:
     USE_SOUTH = False
 
 
-def add_option(kind):
+def add_argument(kind):
     msg = 'Look for {0} tests on appname/tests/{0}/*test*.py'
     return make_option(
         '--%s' % kind, action='store_true',
@@ -48,9 +48,9 @@ def add_option(kind):
 
 class Command(test.Command):
     option_list = test.Command.option_list + (
-        add_option('unit'),
-        add_option('functional'),
-        add_option('integration'),
+        add_argument('unit'),
+        add_argument('functional'),
+        add_argument('integration'),
     )
 
     def handle(self, *test_labels, **options):

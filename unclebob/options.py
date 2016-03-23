@@ -23,18 +23,21 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
-from optparse import make_option
 
 
-def add_option(kind):
+def add_argument(kind):
     msg = 'Look for {0} tests on appname/tests/{0}/*test*.py'
-    return make_option(
-        '--%s' % kind, action='store_true',
-        dest='is_%s' % kind, default=False,
-        help=msg.format(kind))
+    return (
+        '--%s' % kind, {
+        'action': 'store_true',
+        'dest': 'is_%s' % kind,
+        'default': False,
+        'help': msg.format(kind)
+        }
+    )
 
 basic = [
-    add_option('unit'),
-    add_option('functional'),
-    add_option('integration'),
+    add_argument('unit'),
+    add_argument('functional'),
+    add_argument('integration'),
 ]
